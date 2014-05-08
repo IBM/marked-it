@@ -1,0 +1,21 @@
+{
+  "name": "markdownProcessor",
+  "version": "0.0.0",
+  "private": true,
+  "description": "reads markdown files from a directory and used marked to generate corresponding .html files",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://hub.jazz.net/git/ggayed/markdownProcessor"
+  },
+  "keywords": [
+    "markdown",
+    "marked",
+    "html"
+  ],
+  "author": "Grant Gayed",
+  "license": "BSD"
+}
