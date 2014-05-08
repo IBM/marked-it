@@ -41,7 +41,7 @@ if (!fs.existsSync(destinationDir)) {
 }
 
 var writeStat = fs.statSync(destinationDir);
-var writeBlockSize = writeStat.blksize;
+var writeBlockSize = writeStat.blksize || 4096;
 
 if (baseURL) {
 	marked.InlineLexer.prototype.outputLink = baseURL;
@@ -57,7 +57,7 @@ filenames.forEach(function(current) {
 				console.log("Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
 			} else {
 				var readStat = fs.fstatSync(readFd);
-				var readBlockSize = readStat.blksize;
+				var readBlockSize = readStat.blksize || 4096;
 				var fileSize = readStat.size;
 				var inBuffer = new Buffer(fileSize);
 				var totalReadCount = 0;
