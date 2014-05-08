@@ -32,8 +32,6 @@ if (!fs.existsSync(destinationDir)) {
 	process.exit();	
 }
 
-var readStat = fs.statSync(sourceDir);
-var readBlockSize = readStat.blksize;
 var writeStat = fs.statSync(destinationDir);
 var writeBlockSize = writeStat.blksize;
 				
@@ -41,36 +39,49 @@ var filenames = fs.readdirSync(sourceDir);
 filenames.forEach(function(current) {
 	if (EXTENSION_MARKDOWN.test(current)) {
 		var sourcePath = path.join(sourceDir, current);
-		fs.open(sourcePath, "r", null, function(err, fd) {
-			if (fd) {
-				var buffer = new Buffer(readBlockSize);
-				var fileText = "";
-				var bytesRead;
+		fs.open(sourcePath, "r", null, function(err, readFd) {
+			if (readFd) {
+				var readStat = fs.fstatSync(readFd);
+				var readBlockSize = readStat.blksize;
+				var fileSize = readStat.size;
+				var buffer = new Buffer(fileSize);
+				var totalReadCount = 0;
 				do {
-					bytesRead = fs.readSync(fd, buffer, 0, readBlockSize, null);
-					fileText += buffer.toString("utf8", 0, bytesRead);
-				} while (bytesRead === readBlockSize);
-				if (!fileText.length) {
-					console.log("Failed to read the content of file " + sourcePath);
+					var length = Math.min(readBlockSize, fileSize - totalReadCount);
+					var readCount = fs.readSync(readFd, buffer, totalReadCount, length, null);
+					if (!readCount) {
+						break;
+					}
+					totalReadCount += readCount;
+				} while (totalReadCount < fileSize);
+				if (totalReadCount !== fileSize) {
+					console.log("Failed to read the full content of file " + sourcePath);
 				} else {
+					var fileText = buffer.toString("utf8", 0, buffer.length); // TODO use marked to generate HTML
+
 					var destinationPath = path.join(destinationDir, current);
 					var writeFlags = overwrite ? "w" : "wx";
 					fs.open(destinationPath, writeFlags, WRITE_PERMISSIONS, function(writeErr, writeFd) {
 						if (writeFd) {
-							var bytesWritten = 0;
+							var totalWriteCount = 0;
 							do {
-								var writeLength = Math.min(writeBlockSize, buffer.length - bytesWritten);
-								var writtenLength = fs.writeSync(writeFd, buffer, bytesWritten, writeLength, null);
-								if (!writtenLength) {
+								length = Math.min(writeBlockSize, buffer.length - totalWriteCount);
+								var writeCount = fs.writeSync(writeFd, buffer, totalWriteCount, length, null);
+								if (!writeCount) {
 									console.log("0-length write, running away" + destinationPath);
 									break;
 								}
-								bytesWritten += writtenLength;
-							} while (bytesWritten < buffer.length);
+								totalWriteCount += writeCount;
+							} while (totalWriteCount < buffer.length);
+							if (totalWriteCount !== buffer.length) {
+								console.log("Failed to write the full content of file " + destinationPath);
+							}
 						}
+						fs.close(writeFd);
 					});
 				}
 			}
+			fs.close(readFd);
 		});
 	}
 });
