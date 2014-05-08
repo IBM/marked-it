@@ -98,12 +98,12 @@ filenames.forEach(function(current) {
 							} else {
 								console.log("Wrote " + destinationPath);
 							}
+							fs.close(writeFd);
 						}
-//						fs.close(writeFd);
 					});
 				}
+				fs.close(readFd);
 			}
-//			fs.closeSync(readFd);
 		});
 	}
 });
