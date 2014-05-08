@@ -46,7 +46,8 @@ var writeBlockSize = writeStat.blksize;
 if (baseURL) {
 	marked.InlineLexer.prototype.outputLink = baseURL;
 }
-				
+
+console.log("");
 var filenames = fs.readdirSync(sourceDir);
 filenames.forEach(function(current) {
 	if (EXTENSION_MARKDOWN_REGEX.test(current)) {
@@ -96,7 +97,7 @@ filenames.forEach(function(current) {
 							if (totalWriteCount !== outBuffer.length) {
 								console.log("Failed to write the full content of file " + destinationPath);
 							} else {
-								console.log("Wrote " + destinationPath);
+								console.log("-->Wrote " + destinationPath);
 							}
 							fs.close(writeFd);
 						}
