@@ -1,5 +1,6 @@
 var fs = require('fs');
 var path = require('path');
+var marked = require('marked');
 
 var SWITCH_SOURCEDIR = "--sourceDir", SWITCH_DESTINATIONDIR = "--destinationDir", SWITCH_OVERWRITE = "-overwrite";
 var EXTENSION_MARKDOWN = /\.md$/;
@@ -18,7 +19,7 @@ process.argv.forEach(function(arg) {
 });
 
 if (!sourceDir || !destinationDir) {
-	console.log("Usage: node markdownProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTINATIONDIR + "=<destinationDirectory> [" + SWITCH_OVERWRITE + "]");
+	console.log("Usage: node mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTINATIONDIR + "=<destinationDirectory> [" + SWITCH_OVERWRITE + "]");
 	process.exit();
 }
 
@@ -44,11 +45,11 @@ filenames.forEach(function(current) {
 				var readStat = fs.fstatSync(readFd);
 				var readBlockSize = readStat.blksize;
 				var fileSize = readStat.size;
-				var buffer = new Buffer(fileSize);
+				var inBuffer = new Buffer(fileSize);
 				var totalReadCount = 0;
 				do {
 					var length = Math.min(readBlockSize, fileSize - totalReadCount);
-					var readCount = fs.readSync(readFd, buffer, totalReadCount, length, null);
+					var readCount = fs.readSync(readFd, inBuffer, totalReadCount, length, null);
 					if (!readCount) {
 						break;
 					}
@@ -57,23 +58,29 @@ filenames.forEach(function(current) {
 				if (totalReadCount !== fileSize) {
 					console.log("Failed to read the full content of file " + sourcePath);
 				} else {
-					var fileText = buffer.toString("utf8", 0, buffer.length); // TODO use marked to generate HTML
-
+					var fileText = inBuffer.toString("utf8", 0, inBuffer.length); // TODO use marked to generate HTML
+					var markdownText = marked(fileText, {
+						sanitize: true
+					});
+					if (!markdownText) {
+						console.log("Failed during conversion of markdown to HTML file " + sourcePath);
+					}
+					var outBuffer = new Buffer(markdownText);
 					var destinationPath = path.join(destinationDir, current);
 					var writeFlags = overwrite ? "w" : "wx";
 					fs.open(destinationPath, writeFlags, WRITE_PERMISSIONS, function(writeErr, writeFd) {
 						if (writeFd) {
 							var totalWriteCount = 0;
 							do {
-								length = Math.min(writeBlockSize, buffer.length - totalWriteCount);
-								var writeCount = fs.writeSync(writeFd, buffer, totalWriteCount, length, null);
+								length = Math.min(writeBlockSize, outBuffer.length - totalWriteCount);
+								var writeCount = fs.writeSync(writeFd, outBuffer, totalWriteCount, length, null);
 								if (!writeCount) {
 									console.log("0-length write, running away" + destinationPath);
 									break;
 								}
 								totalWriteCount += writeCount;
-							} while (totalWriteCount < buffer.length);
-							if (totalWriteCount !== buffer.length) {
+							} while (totalWriteCount < outBuffer.length);
+							if (totalWriteCount !== outBuffer.length) {
 								console.log("Failed to write the full content of file " + destinationPath);
 							}
 						}
