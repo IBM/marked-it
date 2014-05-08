@@ -35,7 +35,7 @@ if (!fs.existsSync(destinationDir)) {
 
 var filenames = fs.readdirSync(sourceDir);
 filenames.forEach(function(current) {
-	if (current.test(EXTENSION_MARKDOWN)) {
+	if (EXTENSION_MARKDOWN.test(current)) {
 		var sourcePath = path.join(sourceDir, current);
 		fs.open(sourcePath, "r", null, function(err, fd) {
 			if (fd) {
