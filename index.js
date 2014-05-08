@@ -3,7 +3,6 @@ var path = require('path');
 
 var SWITCH_SOURCEDIR = "--sourceDir", SWITCH_DESTINATIONDIR = "--destinationDir", SWITCH_OVERWRITE = "-overwrite";
 var EXTENSION_MARKDOWN = /\.md$/;
-var SIZE_BLOCK = 4096;
 var WRITE_PERMISSIONS = 0644;
 
 var sourceDir, destinationDir, overwrite;
@@ -33,19 +32,24 @@ if (!fs.existsSync(destinationDir)) {
 	process.exit();	
 }
 
+var readStat = fs.statSync(sourceDir);
+var readBlockSize = readStat.blksize;
+var writeStat = fs.statSync(destinationDir);
+var writeBlockSize = writeStat.blksize;
+				
 var filenames = fs.readdirSync(sourceDir);
 filenames.forEach(function(current) {
 	if (EXTENSION_MARKDOWN.test(current)) {
 		var sourcePath = path.join(sourceDir, current);
 		fs.open(sourcePath, "r", null, function(err, fd) {
 			if (fd) {
-				var buffer = new Buffer(SIZE_BLOCK);
+				var buffer = new Buffer(readBlockSize);
 				var fileText = "";
 				var bytesRead;
 				do {
-					bytesRead = fs.readSync(fd, buffer, 0, SIZE_BLOCK, null);
+					bytesRead = fs.readSync(fd, buffer, 0, readBlockSize, null);
 					fileText += buffer.toString("utf8", 0, bytesRead);
-				} while (bytesRead === SIZE_BLOCK);
+				} while (bytesRead === readBlockSize);
 				if (!fileText.length) {
 					console.log("Failed to read the content of file " + sourcePath);
 				} else {
@@ -55,9 +59,11 @@ filenames.forEach(function(current) {
 						if (writeFd) {
 							var bytesWritten = 0;
 							do {
-								var writtenLength = fs.writeSync(writeFd, buffer, bytesWritten, SIZE_BLOCK, null);
+								var writeLength = Math.min(writeBlockSize, buffer.length - bytesWritten);
+								var writtenLength = fs.writeSync(writeFd, buffer, bytesWritten, writeLength, null);
 								if (!writtenLength) {
-									
+									console.log("0-length write, running away" + destinationPath);
+									break;
 								}
 								bytesWritten += writtenLength;
 							} while (bytesWritten < buffer.length);
