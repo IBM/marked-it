@@ -77,11 +77,11 @@ filenames.forEach(function(current) {
 								console.log("Failed to write the full content of file " + destinationPath);
 							}
 						}
-						fs.close(writeFd);
+//						fs.close(writeFd);
 					});
 				}
 			}
-			fs.close(readFd);
+//			fs.closeSync(readFd);
 		});
 	}
 });
