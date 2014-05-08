@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "description": "reads markdown files from a directory and used the 'marked' module to generate the corresponding .html files",
-  "main": "js/mdProcessor.js",
+  "main": "mdProcessor.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

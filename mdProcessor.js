@@ -14,15 +14,15 @@ process.argv.forEach(function(arg) {
 		sourceDir = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_DESTDIR) === 0 && arg.indexOf("=") !== -1) {
 		destinationDir = arg.substring(arg.indexOf("=") + 1);
-	} else if (arg.indexOf(SWITCH_BASEURL) === 0 && arg.indexOf("=") !== -1) {
-		baseURL = arg.substring(arg.indexOf("=") + 1);
+//	} else if (arg.indexOf(SWITCH_BASEURL) === 0 && arg.indexOf("=") !== -1) {
+//		baseURL = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_OVERWRITE) === 0) {
 		overwrite = true;
 	}
 });
 
 if (!sourceDir || !destinationDir) {
-	console.log("Usage: node mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + SWITCH_BASEURL + "=<baseURL>][" + SWITCH_OVERWRITE + "]");
+	console.log("Usage: node mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" /* + SWITCH_BASEURL + "=<baseURL>]["*/ + SWITCH_OVERWRITE + "]");
 	process.exit();
 }
 
@@ -95,6 +95,8 @@ filenames.forEach(function(current) {
 							} while (totalWriteCount < outBuffer.length);
 							if (totalWriteCount !== outBuffer.length) {
 								console.log("Failed to write the full content of file " + destinationPath);
+							} else {
+								console.log("Wrote " + destinationPath);
 							}
 						}
 //						fs.close(writeFd);
