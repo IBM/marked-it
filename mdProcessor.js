@@ -47,64 +47,83 @@ if (baseURL) {
 	marked.InlineLexer.prototype.outputLink = baseURL;
 }
 
-console.log("");
-var filenames = fs.readdirSync(sourceDir);
-filenames.forEach(function(current) {
-	if (EXTENSION_MARKDOWN_REGEX.test(current)) {
-		var sourcePath = path.join(sourceDir, current);
-		fs.open(sourcePath, "r", null, function(readErr, readFd) {
-			if (readErr) {
-				console.log("Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
+var traverse_tree = function(source, destination) {
+	var filenames = fs.readdirSync(source);
+	filenames.forEach(function(current) {
+		var sourcePath = path.join(source, current);
+		fs.stat(sourcePath, function(err, stat) {
+			if (stat && stat.isDirectory()) {
+				var destPath = path.join(destination, current);
+				fs.stat(destPath, function (err,stat) {
+					if (!stat) {
+						fs.mkdir(destPath, function (err) {
+						});
+					}
+				});
+				traverse_tree(sourcePath, destPath);
 			} else {
-				var readStat = fs.fstatSync(readFd);
-				var readBlockSize = readStat.blksize || 4096;
-				var fileSize = readStat.size;
-				var inBuffer = new Buffer(fileSize);
-				var totalReadCount = 0;
-				do {
-					var length = Math.min(readBlockSize, fileSize - totalReadCount);
-					var readCount = fs.readSync(readFd, inBuffer, totalReadCount, length, null);
-					if (!readCount) {
-						break;
-					}
-					totalReadCount += readCount;
-				} while (totalReadCount < fileSize);
-				if (totalReadCount !== fileSize) {
-					console.log("Failed to read the full content of file " + sourcePath);
-				} else {
-					var fileText = inBuffer.toString("utf8", 0, inBuffer.length);
-					var markdownText = marked(fileText, OPTIONS_MARKED);
-					if (!markdownText) {
-						console.log("Failed during conversion of markdown to HTML file " + sourcePath);
-					}
-					var outBuffer = new Buffer(markdownText);
-					var outputFilename = current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML);
-					var destinationPath = path.join(destinationDir, outputFilename);
-					fs.open(destinationPath, overwrite ? "w" : "wx", null, function(writeErr, writeFd) {
-						if (writeErr) {
-							console.log("Failed to open file to write: " + sourcePath + "\n" + writeErr.toString());
+				if(path.extname(current) === ".md") {
+					fs.open(sourcePath, "r", null, function(readErr, readFd) {
+						if (readErr) {
+							console.log("Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
 						} else {
-							var totalWriteCount = 0;
+							var readStat = fs.fstatSync(readFd);
+							var readBlockSize = readStat.blksize || 4096;
+							var fileSize = readStat.size;
+							var inBuffer = new Buffer(fileSize);
+							var totalReadCount = 0;
 							do {
-								length = Math.min(writeBlockSize, outBuffer.length - totalWriteCount);
-								var writeCount = fs.writeSync(writeFd, outBuffer, totalWriteCount, length, null);
-								if (!writeCount) {
-									console.log("0-length write, running away" + destinationPath);
+								var length = Math.min(readBlockSize, fileSize - totalReadCount);
+								var readCount = fs.readSync(readFd, inBuffer, totalReadCount, length, null);
+								if (!readCount) {
 									break;
 								}
-								totalWriteCount += writeCount;
-							} while (totalWriteCount < outBuffer.length);
-							if (totalWriteCount !== outBuffer.length) {
-								console.log("Failed to write the full content of file " + destinationPath);
+								totalReadCount += readCount;
+							} while (totalReadCount < fileSize);
+							if (totalReadCount !== fileSize) {
+								console.log("Failed to read the full content of file " + sourcePath);
 							} else {
-								console.log("-->Wrote " + destinationPath);
+								var fileText = inBuffer.toString("utf8", 0, inBuffer.length);
+								var markdownText = marked(fileText, OPTIONS_MARKED);
+								if (!markdownText) {
+									console.log("Failed during conversion of markdown to HTML file " + sourcePath);
+								}
+								var outBuffer = new Buffer(markdownText);
+								var outputFilename = current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML);
+								var destinationPath = path.join(destination, outputFilename);
+								fs.open(destinationPath, overwrite ? "w" : "wx", null, function(writeErr, writeFd) {
+									if (writeErr) {
+										console.log("Failed to open file to write: " + sourcePath + "\n" + writeErr.toString());
+									} else {
+										var totalWriteCount = 0;
+										do {
+											length = Math.min(writeBlockSize, outBuffer.length - totalWriteCount);
+											var writeCount = fs.writeSync(writeFd, outBuffer, totalWriteCount, length, null);
+											if (!writeCount) {
+												console.log("0-length write, running away" + destinationPath);
+												break;
+											}
+											totalWriteCount += writeCount;
+										} while (totalWriteCount < outBuffer.length);
+										if (totalWriteCount !== outBuffer.length) {
+											console.log("Failed to write the full content of file " + destinationPath);
+										} else {
+											console.log("-->Wrote " + destinationPath);
+										}
+										fs.close(writeFd);
+									}
+								});
 							}
-							fs.close(writeFd);
+							fs.close(readFd);
 						}
 					});
+				} else {
+					console.log("file " + sourcePath + " is not a markdown");
 				}
-				fs.close(readFd);
 			}
 		});
-	}
-});
+	});
+}
+
+console.log("");
+traverse_tree(sourceDir, destinationDir);
