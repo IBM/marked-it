@@ -197,5 +197,3 @@ function writeFile(fd, buffer) {
 	} while (totalWriteCount < buffer.length);
 	return true;
 }
-
-});
