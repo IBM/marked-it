@@ -68,7 +68,9 @@ if (baseURL) {
 	marked.InlineLexer.prototype.outputLink = baseURL;
 }
 
-addMarkedAttributesSupport();
+var lexer = new marked.Lexer(OPTIONS_MARKED);
+
+addMarkedAttributesSupport(lexer);
 
 function traverse_tree(source, destination) {
 	var filenames = fs.readdirSync(source);
@@ -93,7 +95,8 @@ function traverse_tree(source, destination) {
 							if (!fileText) {
 								console.log("Failed to read " + sourcePath);
 							} else {
-								var markdownText = marked(fileText, OPTIONS_MARKED);
+								var tokens = lexer.lex(fileText, OPTIONS_MARKED);
+								var markdownText = marked.parse(tokens);
 								if (!markdownText) {
 									console.log("Failed during conversion of markdown to HTML file " + sourcePath);
 								} else {
@@ -138,20 +141,25 @@ function traverse_tree(source, destination) {
 console.log("");
 traverse_tree(sourceDir, destinationDir);
 
-function addMarkedAttributesSupport() {
-	var markedLexerTokenFn = marked.Lexer.prototype.token;
+function addMarkedAttributesSupport(lexer) {
+	var markedLexerTokenFn = marked.Lexer.prototype.token.bind(lexer);
 	marked.Lexer.prototype.token = function(src, top) {
 		var tokens = markedLexerTokenFn(src, top);
-		var lastNonAttributeToken;
 		for (var i = 0; i < tokens.length;) {
 			var text = tokens[i].text;
-			var equalsIndex = text.indexOf("=");
-			if (lastNonAttributeToken && equalsIndex !== -1 && tokens[i].type === "paragraph" && !text.indexOf("{:") && text.lastIndexOf("}") === tokens[i].text.length - 1) {
-				lastNonAttributeToken.attributes = lastNonAttributeToken.attributes || [];
-				lastNonAttributeToken.attributes.push({name: text.substring(2, equalsIndex), value: text.substring(equalsIndex)});
-				tokens.splice(i, 1);
-			} else {
-				lastNonAttributeToken = tokens[i++];
+			if (text) {
+				var attributeStartIndex = text.lastIndexOf("{:");
+				if (attributeStartIndex !== -1) {
+					var equalsIndex = text.indexOf("=", attributeStartIndex);
+					if (equalsIndex !== -1) {
+						var endIndex = text.lastIndexOf("}");
+						if (endIndex === text.length - 1) {
+							tokens[i].attributeKey = tokens[i].text.substring(attributeStartIndex + 2, equalsIndex);
+							tokens[i].attributeValue = tokens[i].text.substring(equalsIndex + 1, text.length - 1);
+							tokens[i].text = tokens[i].text.substring(0, attributeStartIndex);
+						}
+					}
+				}
 			}
 		}
 	};
@@ -189,3 +197,5 @@ function writeFile(fd, buffer) {
 	} while (totalWriteCount < buffer.length);
 	return true;
 }
+
+});
