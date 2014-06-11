@@ -96,7 +96,7 @@ function traverse_tree(source, destination) {
 								console.log("Failed to read " + sourcePath);
 							} else {
 								var tokens = lexer.lex(fileText, OPTIONS_MARKED);
-								var markdownText = marked.parse(tokens);
+								var markdownText = new marked.Parser(OPTIONS_MARKED).parse(tokens);
 								if (!markdownText) {
 									console.log("Failed during conversion of markdown to HTML file " + sourcePath);
 								} else {
@@ -145,8 +145,8 @@ function addMarkedAttributesSupport(lexer) {
 	var markedLexerTokenFn = marked.Lexer.prototype.token.bind(lexer);
 	marked.Lexer.prototype.token = function(src, top) {
 		var tokens = markedLexerTokenFn(src, top);
-		for (var i = 0; i < tokens.length;) {
-			var text = tokens[i].text;
+		tokens.forEach(function(token) {
+			var text = token.text;
 			if (text) {
 				var attributeStartIndex = text.lastIndexOf("{:");
 				if (attributeStartIndex !== -1) {
@@ -154,14 +154,15 @@ function addMarkedAttributesSupport(lexer) {
 					if (equalsIndex !== -1) {
 						var endIndex = text.lastIndexOf("}");
 						if (endIndex === text.length - 1) {
-							tokens[i].attributeKey = tokens[i].text.substring(attributeStartIndex + 2, equalsIndex);
-							tokens[i].attributeValue = tokens[i].text.substring(equalsIndex + 1, text.length - 1);
-							tokens[i].text = tokens[i].text.substring(0, attributeStartIndex);
+							token.attributeKey = text.substring(attributeStartIndex + 2, equalsIndex);
+							token.attributeValue = text.substring(equalsIndex + 1, text.length - 1);
+							token.text = text.substring(0, attributeStartIndex);
 						}
 					}
 				}
 			}
-		}
+		});
+		return tokens;
 	};
 }
 
