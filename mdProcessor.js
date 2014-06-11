@@ -12,6 +12,39 @@ var SWITCH_OVERWRITE = "-overwrite";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
 
+var readFile = function(fd) {
+	var readStat = fs.fstatSync(fd);
+	var readBlockSize = readStat.blksize || 4096;
+	var fileSize = readStat.size;
+	var inBuffer = new Buffer(fileSize);
+	var totalReadCount = 0;
+	do {
+		var length = Math.min(readBlockSize, fileSize - totalReadCount);
+		var readCount = fs.readSync(fd, inBuffer, totalReadCount, length, null);
+		if (!readCount) {
+			break;
+		}
+		totalReadCount += readCount;
+	} while (totalReadCount < fileSize);
+	if (totalReadCount !== fileSize) {
+		return null;
+	}
+	return inBuffer.toString("utf8", 0, inBuffer.length);
+};
+
+var writeFile = function(fd, buffer) {
+	var totalWriteCount = 0;
+	do {
+		var length = Math.min(writeBlockSize, buffer.length - totalWriteCount);
+		var writeCount = fs.writeSync(fd, buffer, totalWriteCount, length, null);
+		if (!writeCount) {
+			return false;
+		}
+		totalWriteCount += writeCount;
+	} while (totalWriteCount < buffer.length);
+	return true;
+};
+
 var sourceDir, destinationDir, baseURL, overwrite, headerFile, footerFile, headerText, footerText;
 
 process.argv.forEach(function(arg) {
@@ -67,39 +100,6 @@ var writeBlockSize = writeStat.blksize || 4096;
 if (baseURL) {
 	marked.InlineLexer.prototype.outputLink = baseURL;
 }
-
-var readFile = function(fd) {
-	var readStat = fs.fstatSync(fd);
-	var readBlockSize = readStat.blksize || 4096;
-	var fileSize = readStat.size;
-	var inBuffer = new Buffer(fileSize);
-	var totalReadCount = 0;
-	do {
-		var length = Math.min(readBlockSize, fileSize - totalReadCount);
-		var readCount = fs.readSync(fd, inBuffer, totalReadCount, length, null);
-		if (!readCount) {
-			break;
-		}
-		totalReadCount += readCount;
-	} while (totalReadCount < fileSize);
-	if (totalReadCount !== fileSize) {
-		return null;
-	}
-	return inBuffer.toString("utf8", 0, inBuffer.length);
-};
-
-var writeFile = function(fd, buffer) {
-	var totalWriteCount = 0;
-	do {
-		var length = Math.min(writeBlockSize, buffer.length - totalWriteCount);
-		var writeCount = fs.writeSync(fd, buffer, totalWriteCount, length, null);
-		if (!writeCount) {
-			return false;
-		}
-		totalWriteCount += writeCount;
-	} while (totalWriteCount < buffer.length);
-	return true;
-};
 
 var traverse_tree = function(source, destination) {
 	var filenames = fs.readdirSync(source);
