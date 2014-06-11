@@ -12,39 +12,6 @@ var SWITCH_OVERWRITE = "-overwrite";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
 
-var readFile = function(fd) {
-	var readStat = fs.fstatSync(fd);
-	var readBlockSize = readStat.blksize || 4096;
-	var fileSize = readStat.size;
-	var inBuffer = new Buffer(fileSize);
-	var totalReadCount = 0;
-	do {
-		var length = Math.min(readBlockSize, fileSize - totalReadCount);
-		var readCount = fs.readSync(fd, inBuffer, totalReadCount, length, null);
-		if (!readCount) {
-			break;
-		}
-		totalReadCount += readCount;
-	} while (totalReadCount < fileSize);
-	if (totalReadCount !== fileSize) {
-		return null;
-	}
-	return inBuffer.toString("utf8", 0, inBuffer.length);
-};
-
-var writeFile = function(fd, buffer) {
-	var totalWriteCount = 0;
-	do {
-		var length = Math.min(writeBlockSize, buffer.length - totalWriteCount);
-		var writeCount = fs.writeSync(fd, buffer, totalWriteCount, length, null);
-		if (!writeCount) {
-			return false;
-		}
-		totalWriteCount += writeCount;
-	} while (totalWriteCount < buffer.length);
-	return true;
-};
-
 var sourceDir, destinationDir, baseURL, overwrite, headerFile, footerFile, headerText, footerText;
 
 process.argv.forEach(function(arg) {
@@ -101,7 +68,9 @@ if (baseURL) {
 	marked.InlineLexer.prototype.outputLink = baseURL;
 }
 
-var traverse_tree = function(source, destination) {
+addMarkedAttributesSupport();
+
+function traverse_tree(source, destination) {
 	var filenames = fs.readdirSync(source);
 	filenames.forEach(function(current) {
 		var sourcePath = path.join(source, current);
@@ -168,3 +137,55 @@ var traverse_tree = function(source, destination) {
 
 console.log("");
 traverse_tree(sourceDir, destinationDir);
+
+function addMarkedAttributesSupport() {
+	var markedLexerTokenFn = marked.Lexer.prototype.token;
+	marked.Lexer.prototype.token = function(src, top) {
+		var tokens = markedLexerTokenFn(src, top);
+		var lastNonAttributeToken;
+		for (var i = 0; i < tokens.length;) {
+			var text = tokens[i].text;
+			var equalsIndex = text.indexOf("=");
+			if (lastNonAttributeToken && equalsIndex !== -1 && tokens[i].type === "paragraph" && !text.indexOf("{:") && text.lastIndexOf("}") === tokens[i].text.length - 1) {
+				lastNonAttributeToken.attributes = lastNonAttributeToken.attributes || [];
+				lastNonAttributeToken.attributes.push({name: text.substring(2, equalsIndex), value: text.substring(equalsIndex)});
+				tokens.splice(i, 1);
+			} else {
+				lastNonAttributeToken = tokens[i++];
+			}
+		}
+	};
+}
+
+function readFile(fd) {
+	var readStat = fs.fstatSync(fd);
+	var readBlockSize = readStat.blksize || 4096;
+	var fileSize = readStat.size;
+	var inBuffer = new Buffer(fileSize);
+	var totalReadCount = 0;
+	do {
+		var length = Math.min(readBlockSize, fileSize - totalReadCount);
+		var readCount = fs.readSync(fd, inBuffer, totalReadCount, length, null);
+		if (!readCount) {
+			break;
+		}
+		totalReadCount += readCount;
+	} while (totalReadCount < fileSize);
+	if (totalReadCount !== fileSize) {
+		return null;
+	}
+	return inBuffer.toString("utf8", 0, inBuffer.length);
+}
+
+function writeFile(fd, buffer) {
+	var totalWriteCount = 0;
+	do {
+		var length = Math.min(writeBlockSize, buffer.length - totalWriteCount);
+		var writeCount = fs.writeSync(fd, buffer, totalWriteCount, length, null);
+		if (!writeCount) {
+			return false;
+		}
+		totalWriteCount += writeCount;
+	} while (totalWriteCount < buffer.length);
+	return true;
+}
