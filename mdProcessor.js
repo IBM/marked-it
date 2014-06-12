@@ -305,8 +305,7 @@ function replacementTok() {
       }
       
       // modified
-      return '<' + elementName +
-        + '>\n'
+      return '<' + elementName + '>\n'
         + body
         + '</' + elementName + '>\n';
     }
