@@ -293,7 +293,7 @@ function replacementTok() {
        * extension to markdown's syntax, but will do this for now as a proof-of-concept.
        */
       var elementName = "blockquote";
-      var kindOfRegex = / elementKind=(['"])([^\1]+)\1/;
+      var kindOfRegex = /[ ]elementKind=(['"])([^\1]+)\1/;
       while (this.next().type !== 'blockquote_end') {
       	var childText = this.tok();
       	var match = kindOfRegex.exec(childText);
@@ -306,7 +306,6 @@ function replacementTok() {
       
       // modified
       return '<' + elementName +
-		+ (this.token.attributes || "")
         + '>\n'
         + body
         + '</' + elementName + '>\n';
@@ -321,7 +320,6 @@ function replacementTok() {
 
       return '<'
         + type
-		+ (this.token.attributes || "") // added
         + '>\n'
         + body
         + '</'
