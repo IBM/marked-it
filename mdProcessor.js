@@ -146,20 +146,17 @@ traverse_tree(sourceDir, destinationDir);
 function addMarkedAttributesSupport(lexer) {
 	var markedLexerTokenFn = marked.Lexer.prototype.token.bind(lexer);
 	marked.Lexer.prototype.token = function(src, top) {
-		var tokens = markedLexerTokenFn(src, top);
-		tokens.forEach(function(token) {
+		var tokens = markedLexerTokenFn(src, top); /* call marked's original lexer function */
+		tokens.forEach(function(token) { /* look through the gen'd tokens for attributes */
 			var text = token.text;
 			if (text) {
 				var attributeStartIndex = text.lastIndexOf("{:");
 				if (attributeStartIndex !== -1) {
-					var equalsIndex = text.indexOf("=", attributeStartIndex);
-					if (equalsIndex !== -1) {
-						var endIndex = text.lastIndexOf("}");
-						if (endIndex === text.length - 1) {
-							token.attributeKey = text.substring(attributeStartIndex + 2, equalsIndex);
-							token.attributeValue = text.substring(equalsIndex + 1, text.length - 1);
-							token.text = text.substring(0, attributeStartIndex);
-						}
+					var endIndex = text.lastIndexOf("}");
+					if (endIndex === text.length - 1) {
+						/* found an attribute, add it to the token and remove its string from the token's text */
+						token.attributes = " " + text.substring(attributeStartIndex + 2, text.length - 1);
+						token.text = text.substring(0, attributeStartIndex);
 					}
 				}
 			}
@@ -201,6 +198,10 @@ function writeFile(fd, buffer) {
 	return true;
 }
 
+/*
+ * The following function is a copy of marker's tok() function except where noted
+ * by the trailing comment "// added by IBM"
+ */
 function replacementTok() {
   switch (this.token.type) {
     case 'space': {
@@ -212,6 +213,7 @@ function replacementTok() {
     case 'heading': {
       return '<h'
         + this.token.depth
+        + (this.token.attributes || "") // added by IBM
         + '>'
         + this.inline.output(this.token.text)
         + '</h'
@@ -238,6 +240,7 @@ function replacementTok() {
         + this.token.lang
         + '"'
         : '')
+		+ (this.token.attributes || "") // added by IBM
         + '>'
         + this.token.text
         + '</code></pre>\n';
@@ -286,7 +289,9 @@ function replacementTok() {
         body += this.tok();
       }
 
-      return '<blockquote>\n'
+      return '<blockquote' +
+		+ (this.token.attributes || "") // added by IBM
+        + '>\n'
         + body
         + '</blockquote>\n';
     }
@@ -300,6 +305,7 @@ function replacementTok() {
 
       return '<'
         + type
+		+ (this.token.attributes || "") // added by IBM
         + '>\n'
         + body
         + '</'
@@ -336,7 +342,9 @@ function replacementTok() {
         : this.token.text;
     }
     case 'paragraph': {
-      return '<p>'
+      return '<p'
+		+ (this.token.attributes || "") // added by IBM
+        + '>'
         + this.inline.output(this.token.text)
         + '</p>\n';
     }
