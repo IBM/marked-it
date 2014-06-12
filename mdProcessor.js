@@ -285,26 +285,25 @@ function replacementTok() {
     case 'blockquote_start': {
       var body = '';
 
-      while (this.next().type !== 'blockquote_end') {
-        body += this.tok();
-      }
-
       // added
       /*
        * Special case: Since blockquote is a container element, use it as an opportunity
        * to define arbitrary kinds of container elements by looking for the "elementKind".
-       * attribute.  This may be a bit too hacky, an alternative would be a new markdown
-       * syntax, but will do this for now as a proof-of-concept.
+       * attribute in its last child.  This is very hacky, an alternative would be an
+       * extension to markdown's syntax, but will do this for now as a proof-of-concept.
        */
       var elementName = "blockquote";
-      if (this.token.attributes && this.token.attributes.indexOf("elementKind") === 1) {
-          var equalsIndex = this.token.attributes.indexOf("=\"");
-          if (equalsIndex !== -1) {
-            elementName = this.token.attributes.substring(equalsIndex + 2, this.token.attributes.length - 1);
-            this.token.attributes = null;
-          }
+      var kindOfRegex = / elementKind=(['"])([^\1]+)\1/;
+      while (this.next().type !== 'blockquote_end') {
+      	var childText = this.tok();
+      	var match = kindOfRegex.exec(childText);
+      	if (match) {
+      		elementName = match[2];
+      		childText.replace(match[0], "");
+      	}
+        body += childText;
       }
-
+      
       // modified
       return '<' + elementName +
 		+ (this.token.attributes || "")
