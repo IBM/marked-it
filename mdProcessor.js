@@ -9,10 +9,11 @@ var SWITCH_SOURCEDIR = "--sourceDir";
 var SWITCH_DESTDIR = "--destDir";
 var SWITCH_BASEURL = "--baseURL";
 var SWITCH_OVERWRITE = "-overwrite";
+var SWITCH_ATTRIBUTES = "-enableAttributes";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
 
-var sourceDir, destinationDir, baseURL, overwrite, headerFile, footerFile, headerText, footerText;
+var sourceDir, destinationDir, baseURL, overwrite, enableAttributes, headerFile, footerFile, headerText, footerText;
 
 process.argv.forEach(function(arg) {
 	if (arg.indexOf(SWITCH_SOURCEDIR) === 0 && arg.indexOf("=") !== -1) {
@@ -23,6 +24,8 @@ process.argv.forEach(function(arg) {
 //		baseURL = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_OVERWRITE) === 0) {
 		overwrite = true;
+	} else if (arg.indexOf(SWITCH_ATTRIBUTES) === 0) {
+		enableAttributes = true;
 	} else if (arg.indexOf(SWITCH_HEADERFILE) === 0 && arg.indexOf("=") !== -1) {
 		headerFile = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_FOOTERFILE) === 0 && arg.indexOf("=") !== -1) {
@@ -31,7 +34,7 @@ process.argv.forEach(function(arg) {
 });
 
 if (!sourceDir || !destinationDir) {
-	console.log("Usage: node mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" /* + SWITCH_BASEURL + "=<baseURL>]["*/ + SWITCH_OVERWRITE + " " + SWITCH_HEADERFILE + "=<headerSourceFile> " + SWITCH_FOOTERFILE + "=<footerSourceFile>]");
+	console.log("Usage: node mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + "\n\t\t" + SWITCH_OVERWRITE + "\n\t\t" + SWITCH_ATTRIBUTES + "\n\t\t" + SWITCH_HEADERFILE + "=<headerSourceFile>" + "\n\t\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>" + "\n\t]");
 	process.exit();
 }
 
@@ -72,7 +75,9 @@ var lexer = new marked.Lexer(OPTIONS_MARKED);
 var parser = new marked.Parser(OPTIONS_MARKED);
 marked.Parser.prototype.tok = replacementTok.bind(parser);
 
-addMarkedAttributesSupport(lexer);
+if (enableAttributes) {
+	addMarkedAttributesSupport(lexer);
+}
 
 function traverse_tree(source, destination) {
 	var filenames = fs.readdirSync(source);
