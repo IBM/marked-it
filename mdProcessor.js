@@ -200,7 +200,7 @@ function writeFile(fd, buffer) {
 
 /*
  * The following function is a copy of marker's tok() function except where noted
- * by the trailing comment "// added by IBM"
+ * by the "added/modified" comments
  */
 function replacementTok() {
   switch (this.token.type) {
@@ -213,7 +213,7 @@ function replacementTok() {
     case 'heading': {
       return '<h'
         + this.token.depth
-        + (this.token.attributes || "") // added by IBM
+        + (this.token.attributes || "") // added
         + '>'
         + this.inline.output(this.token.text)
         + '</h'
@@ -240,7 +240,7 @@ function replacementTok() {
         + this.token.lang
         + '"'
         : '')
-		+ (this.token.attributes || "") // added by IBM
+		+ (this.token.attributes || "") // added
         + '>'
         + this.token.text
         + '</code></pre>\n';
@@ -289,11 +289,28 @@ function replacementTok() {
         body += this.tok();
       }
 
-      return '<blockquote' +
-		+ (this.token.attributes || "") // added by IBM
+      // added
+      /*
+       * Special case: Since blockquote is a container element, use it as an opportunity
+       * to define arbitrary kinds of container elements by looking for the "elementKind".
+       * attribute.  This may be a bit too hacky, an alternative would be a new markdown
+       * syntax, but will do this for now as a proof-of-concept.
+       */
+      var elementName = "blockquote";
+      if (this.token.attributes && this.token.attributes.indexOf("elementKind") === 1) {
+          var equalsIndex = this.token.attributes.indexOf("=\"");
+          if (equalsIndex !== -1) {
+            elementName = this.token.attributes.substring(equalsIndex + 2, this.token.attributes.length - 1);
+            this.token.attributes = null;
+          }
+      }
+
+      // modified
+      return '<' + elementName +
+		+ (this.token.attributes || "")
         + '>\n'
         + body
-        + '</blockquote>\n';
+        + '</' + elementName + '>\n';
     }
     case 'list_start': {
       var type = this.token.ordered ? 'ol' : 'ul'
@@ -305,7 +322,7 @@ function replacementTok() {
 
       return '<'
         + type
-		+ (this.token.attributes || "") // added by IBM
+		+ (this.token.attributes || "") // added
         + '>\n'
         + body
         + '</'
@@ -343,7 +360,7 @@ function replacementTok() {
     }
     case 'paragraph': {
       return '<p'
-		+ (this.token.attributes || "") // added by IBM
+		+ (this.token.attributes || "") // added
         + '>'
         + this.inline.output(this.token.text)
         + '</p>\n';
