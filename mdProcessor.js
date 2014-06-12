@@ -304,9 +304,9 @@ function replacementTok() {
       	var match = kindOfRegex.exec(childText);
       	if (match) {
       		elementName = match[2];
-      		childText.replace(match[0], "");
-      	}
-        body += childText;
+      	} else {
+        	body += childText;
+        }
       }
       
       // modified
