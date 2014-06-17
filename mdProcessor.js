@@ -41,19 +41,19 @@ process.argv.forEach(function(arg) {
 });
 
 if (!sourceDir || !destinationDir) {
-	console.log("Usage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + "\n\t\t" + SWITCH_OVERWRITE + "\n\t\t" + SWITCH_ATTRIBUTES + "\n\t\t" + SWITCH_HEADERFILE + "=<headerSourceFile>" + "\n\t\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>" + "\n\t]");
+	console.log("\nUsage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + "\n\t\t" + SWITCH_OVERWRITE + "\n\t\t" + SWITCH_ATTRIBUTES + "\n\t\t" + SWITCH_HEADERFILE + "=<headerSourceFile>" + "\n\t\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>" + "\n\t]");
 	process.exit();
 }
 
 if (!fs.existsSync(sourceDir)) {
-	console.log("Source directory does not exist: " + sourceDir);
+	console.log("*** Source directory does not exist: " + sourceDir);
 	process.exit();	
 }
 
 if (!fs.existsSync(destinationDir)) {
 	var result = fs.mkdirSync(destinationDir);
 	if (result) {
-		console.log("Failed to create destination directory: " + destinationDir);
+		console.log("*** Failed to create destination directory: " + destinationDir);
 		console.log(result.toString());
 		process.exit();	
 	}
@@ -105,21 +105,21 @@ function traverse_tree(source, destination) {
 				if (path.extname(current) === ".md") {
 					fs.open(sourcePath, "r", null, function(readErr, readFd) {
 						if (readErr) {
-							console.log("Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
+							console.log("*** Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
 						} else {
 							var fileText = readFile(readFd);
 							if (!fileText) {
-								console.log("Failed to read " + sourcePath);
+								console.log("*** Failed to read " + sourcePath);
 							} else {
 								var tokens = lexer.lex(fileText, OPTIONS_MARKED);
 								var markdownText = parser.parse(tokens);
 								if (!markdownText) {
-									console.log("Failed during conversion of markdown to HTML file " + sourcePath);
+									console.log("*** Failed during conversion of markdown to HTML file " + sourcePath);
 								} else {
 									var outBuffer = new Buffer(markdownText);
 									fs.open(destinationPath, overwrite ? "w" : "wx", null, function(writeErr, writeFd) {
 										if (writeErr) {
-											console.log("Failed to open file to write: " + sourcePath + "\n" + writeErr.toString());
+											console.log("*** Failed to open file to write: " + sourcePath + "\n" + writeErr.toString());
 										} else {
 											var success = true;
 											if (headerText) {
@@ -132,9 +132,9 @@ function traverse_tree(source, destination) {
 												success = writeFile(writeFd, new Buffer(footerText));
 											}
 											if (success) {
-												console.log("-->Wrote " + destinationPath);
+												console.log("--> Wrote: " + destinationPath);
 											} else {
-												console.log("Failed to write " + destinationPath);
+												console.log("*** Failed to write: " + destinationPath);
 											}
 											fs.close(writeFd);
 										}
@@ -144,12 +144,11 @@ function traverse_tree(source, destination) {
 							fs.close(readFd);
 						}
 					});
+				} else if (path.extname(current) === ".html") {
+					console.log("--> Copied: " + sourcePath);
+					fs.createReadStream(sourcePath).pipe(fs.createWriteStream(destinationPath));
 				} else {
-					console.log("file " + sourcePath + " is not a markdown");
-					if (path.extname(current) === ".html") {
-						console.log("copying existing html file " + sourcePath);
-						fs.createReadStream(sourcePath).pipe(fs.createWriteStream(destinationPath));
-					}
+					console.log("*** Skipped: " + sourcePath);
 				}
 			}
 		});
