@@ -30,6 +30,8 @@ process.argv.forEach(function(arg) {
 		headerFile = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_FOOTERFILE) === 0 && arg.indexOf("=") !== -1) {
 		footerFile = arg.substring(arg.indexOf("=") + 1);
+	} else {
+		console.log("*** Ignoring unknown command-line switch: " + arg);
 	}
 });
 
