@@ -94,6 +94,8 @@ function traverse_tree(source, destination) {
 				traverse_tree(sourcePath, destPath);
 			} else {
 				if (path.extname(current) === ".md") {
+					var outputFilename = current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML);
+					var destinationPath = path.join(destination, outputFilename);
 					fs.open(sourcePath, "r", null, function(readErr, readFd) {
 						if (readErr) {
 							console.log("Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
@@ -108,8 +110,6 @@ function traverse_tree(source, destination) {
 									console.log("Failed during conversion of markdown to HTML file " + sourcePath);
 								} else {
 									var outBuffer = new Buffer(markdownText);
-									var outputFilename = current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML);
-									var destinationPath = path.join(destination, outputFilename);
 									fs.open(destinationPath, overwrite ? "w" : "wx", null, function(writeErr, writeFd) {
 										if (writeErr) {
 											console.log("Failed to open file to write: " + sourcePath + "\n" + writeErr.toString());
@@ -139,6 +139,10 @@ function traverse_tree(source, destination) {
 					});
 				} else {
 					console.log("file " + sourcePath + " is not a markdown");
+					if (path.extname(current) === ".html") {
+						console.log("copying existing html file " + sourcePath);
+						fs.createReadStream(sourcePath).pipe(fs.createWriteStream(destinationPath));
+					}
 				}
 			}
 		});
