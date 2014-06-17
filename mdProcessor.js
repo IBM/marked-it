@@ -100,9 +100,9 @@ function traverse_tree(source, destination) {
 				});
 				traverse_tree(sourcePath, destPath);
 			} else {
+				var outputFilename = current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML);
+				var destinationPath = path.join(destination, outputFilename);
 				if (path.extname(current) === ".md") {
-					var outputFilename = current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML);
-					var destinationPath = path.join(destination, outputFilename);
 					fs.open(sourcePath, "r", null, function(readErr, readFd) {
 						if (readErr) {
 							console.log("Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
