@@ -15,7 +15,9 @@ var SWITCH_FOOTERFILE = "--footerFile";
 
 var sourceDir, destinationDir, baseURL, overwrite, enableAttributes, headerFile, footerFile, headerText, footerText;
 
+var switchCounter = 0;
 process.argv.forEach(function(arg) {
+	switchCounter++;
 	if (arg.indexOf(SWITCH_SOURCEDIR) === 0 && arg.indexOf("=") !== -1) {
 		sourceDir = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_DESTDIR) === 0 && arg.indexOf("=") !== -1) {
@@ -31,7 +33,10 @@ process.argv.forEach(function(arg) {
 	} else if (arg.indexOf(SWITCH_FOOTERFILE) === 0 && arg.indexOf("=") !== -1) {
 		footerFile = arg.substring(arg.indexOf("=") + 1);
 	} else {
-		console.log("*** Ignoring unknown command-line switch: " + arg);
+		/* don't display errors for the first two args (the node executable and .js file) */
+		if (switchCounter > 2) {
+			console.log("*** Ignoring unknown command-line switch: " + arg);
+		}
 	}
 });
 
