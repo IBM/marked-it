@@ -148,7 +148,7 @@ function traverse_tree(source, destination) {
 					console.log("--> Copied: " + sourcePath);
 					fs.createReadStream(sourcePath).pipe(fs.createWriteStream(destinationPath));
 				} else {
-					console.log("*** Skipped: " + sourcePath);
+					console.log("--> Skipped: " + sourcePath);
 				}
 			}
 		});
