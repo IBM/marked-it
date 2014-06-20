@@ -169,7 +169,7 @@ function addMarkedAttributesSupport(lexer) {
 				if (attributeStartIndex !== -1) {
 					var endIndex = text.lastIndexOf("}");
 					if (endIndex === text.length - 1) {
-						/* found an attribute, add it to the token and remove its string from the token's text */
+						/* found attribute(s), add them to the token and remove the string from the token's text */
 						token.attributes = " " + text.substring(attributeStartIndex + 2, text.length - 1);
 						token.text = text.substring(0, attributeStartIndex);
 					}
@@ -223,7 +223,9 @@ function replacementTok() {
       return '';
     }
     case 'hr': {
-      return '<hr>\n';
+      return '<hr'
+        + (this.token.attributes || "") // added
+        + '>\n';
     }
     case 'heading': {
       return '<h'
@@ -255,7 +257,7 @@ function replacementTok() {
         + this.token.lang
         + '"'
         : '')
-		+ (this.token.attributes || "") // added
+        + (this.token.attributes || "") // added
         + '>'
         + this.token.text
         + '</code></pre>\n';
@@ -293,7 +295,9 @@ function replacementTok() {
       }
       body += '</tbody>\n';
 
-      return '<table>\n'
+      return '<table'
+        + (this.token.attributes || "") // added
+        + '>\n'
         + body
         + '</table>\n';
     }
@@ -308,19 +312,22 @@ function replacementTok() {
        * extension to markdown's syntax, but will do this for now as a proof-of-concept.
        */
       var elementName = "blockquote";
-      var kindOfRegex = /[ ]elementKind=(['"])([^\1]+)\1/;
+      var kindOfRegex = /elementKind=(['"])([^\1]+?)\1(.*?)>/;
+      var additionalAttributes;
       while (this.next().type !== 'blockquote_end') {
-      	var childText = this.tok();
-      	var match = kindOfRegex.exec(childText);
-      	if (match) {
-      		elementName = match[2];
-      	} else {
-        	body += childText;
+        var childText = this.tok();
+        var match = kindOfRegex.exec(childText);
+        if (match) {
+          /* this whole token is contributing properties to the parent element */
+          elementName = match[2];
+          additionalAttributes = match[3];
+        } else {
+          body += childText;
         }
       }
-      
+
       // modified
-      return '<' + elementName + '>\n'
+      return '<' + elementName + (additionalAttributes ? ' ' + additionalAttributes.trim() : '') + '>\n'
         + body
         + '</' + elementName + '>\n';
     }
@@ -334,6 +341,7 @@ function replacementTok() {
 
       return '<'
         + type
+        + (this.token.attributes || "") // added
         + '>\n'
         + body
         + '</'
@@ -349,7 +357,9 @@ function replacementTok() {
           : this.tok();
       }
 
-      return '<li>'
+      return '<li'
+        + (this.token.attributes || "") // added
+        + '>'
         + body
         + '</li>\n';
     }
@@ -360,7 +370,9 @@ function replacementTok() {
         body += this.tok();
       }
 
-      return '<li>'
+      return '<li'
+        + (this.token.attributes || "") // added
+        + '>'
         + body
         + '</li>\n';
     }
@@ -371,13 +383,15 @@ function replacementTok() {
     }
     case 'paragraph': {
       return '<p'
-		+ (this.token.attributes || "") // added
+        + (this.token.attributes || "") // added
         + '>'
         + this.inline.output(this.token.text)
         + '</p>\n';
     }
     case 'text': {
-      return '<p>'
+      return '<p'
+        + (this.token.attributes || "") // added
+        + '>'
         + this.parseText()
         + '</p>\n';
     }
