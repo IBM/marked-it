@@ -144,9 +144,34 @@ function traverse_tree(source, destination) {
 							fs.close(readFd);
 						}
 					});
-				} else if (path.extname(current) === ".html") {
-					console.log("--> Copied: " + sourcePath);
-					fs.createReadStream(sourcePath).pipe(fs.createWriteStream(destinationPath));
+				} else if (path.extname(current) === ".html" || path.extname(current) === ".css") {
+					fs.open(sourcePath, "r", null, function(readErr, readFd) {
+						if (readErr) {
+							console.log("Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
+						} else {
+							var fileText = readFile(readFd);
+							if (!fileText) {
+								console.log("Failed to read " + sourcePath);
+							} else {
+								var outBuffer = new Buffer(fileText);
+								fs.open(destinationPath, overwrite ? "w" : "wx", null, function(writeErr, writeFd) {
+									if (writeErr) {
+										console.log("Failed to open file to write: " + sourcePath + "\n" + writeErr.toString());
+									} else {
+										var success = writeFile(writeFd, outBuffer);										
+										if (success) {
+											console.log("-->Copied: " + sourcePath);
+										} else {
+											console.log("Failed to write " + destinationPath);
+										}
+										fs.close(writeFd);
+									}
+								});
+								
+							}
+							fs.close(readFd);
+						}
+					});
 				} else {
 					console.log("--> Skipped: " + sourcePath);
 				}
