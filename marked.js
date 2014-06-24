@@ -140,7 +140,6 @@ Lexer.prototype.lex = function(src) {
  */
 
 Lexer.prototype.token = function(src, top) {
-	console.log("*** using the shipped marked");
   var src = src.replace(/^ +$/gm, '')
     , next
     , loose
