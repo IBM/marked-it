@@ -16,7 +16,6 @@
     "marked",
     "html"
   ],
-  "dependencies": {"marked" : "0.2.9"},
   "author": "Grant Gayed",
   "license": "Eclipse Public License v1.0"
 }
