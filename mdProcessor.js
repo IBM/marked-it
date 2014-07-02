@@ -1,6 +1,6 @@
 var fs = require('fs');
 var path = require('path');
-var marked = require('./marked');
+var marked = require('marked');
 
 var EXTENSION_HTML = ".html";
 var EXTENSION_MARKDOWN_REGEX = /\.md$/g;
