@@ -1,10 +1,20 @@
+/*******************************************************************************
+ * Copyright (c) 2014 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials are made 
+ * available under the terms of the Eclipse Public License v1.0 
+ * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
+ * License v1.0 (http://www.eclipse.org/org/documents/edl-v10.html). 
+ * 
+ * Contributors: IBM Corporation - initial API and implementation
+ ******************************************************************************/
+
 var fs = require('fs');
 var path = require('path');
 var marked = require('marked');
 
 var EXTENSION_HTML = ".html";
 var EXTENSION_MARKDOWN_REGEX = /\.md$/g;
-var OPTIONS_MARKED = {sanitize: true, tables: true};
+var OPTIONS_MARKED = {sanitize: true, tables: true, headerPrefix: ""};
 var SWITCH_SOURCEDIR = "--sourceDir";
 var SWITCH_DESTDIR = "--destDir";
 var SWITCH_BASEURL = "--baseURL";
@@ -78,13 +88,79 @@ if (baseURL) {
 	marked.InlineLexer.prototype.outputLink = baseURL;
 }
 
+if (enableAttributes) {
+	/* ---------- the custom generation code is in this block ---------- */
+
+	function escape(html, encode) { // copied from marked.js
+		return html
+			.replace(!encode ? /&(?!#?\w+;)/g : /&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
+	function unescape(html) {
+		return html
+			.replace(/&amp;/g, '&(?!#?\w+;)')
+			.replace(/&lt;/g, '<')
+			.replace(/&gt;/g, '>')
+			.replace(/&quot;/g, '"')
+			.replace(/&#39;/g, "'");
+	}
+
+	var customRenderer = new marked.Renderer();
+	customRenderer.blockquote = function(quote) {
+		/*
+		 * Since blockquote is a container element, use it as an opportunity to define arbitrary kinds of
+		 * container elements by looking for the "elementKind" attribute.  This is very hacky, an alternative
+		 * would be an extension to markdown's syntax, but will do this for now as a proof-of-concept.
+		 */
+		var elementName = "blockquote";
+		var attributesRegex = /<p>{:(.+)}<\/p>\n/;
+		var match = attributesRegex.exec(quote);
+		if (match) {
+			/* found attributes */
+			quote = quote.replace(match[0], "").trim();
+			var attributes = unescape(match[1]);
+			var kindOfRegex = /elementKind=(['"])([^\1]+?)\1/;
+			match = kindOfRegex.exec(attributes);
+			if (match) {
+				/* found an elementKind attribute, which is handled specially */
+				elementName = match[2];
+				attributes = attributes.replace(match[0], "").trim();
+			}
+			return "<" + elementName + " " + attributes + ">\n" + quote + "\n<" + elementName + ">\n";
+		}
+
+		/* no attributes to handle, so just return the default renderer's text */
+		return marked.Renderer.prototype.blockquote.call(this, quote);
+	};
+	customRenderer.heading = function(text, level, raw) {
+		var attributeStartIndex = raw.lastIndexOf("{:");
+		if (attributeStartIndex !== -1) {
+			var endIndex = raw.lastIndexOf("}");
+			if (endIndex === raw.length - 1) {
+				/* found attributes */
+				var attributes = " " + raw.substring(attributeStartIndex + 2, raw.length - 1);
+				raw = raw.substring(0, attributeStartIndex);
+				text = escape(raw);
+			}
+		}
+
+		var result = marked.Renderer.prototype.heading.call(this, text, level, raw);
+		if (attributes) {
+			/* hacky, making an assumption about the shape of the result string from the default renderer */
+			result = result.substring(0, 3) + attributes + result.substring(3);
+		}
+		return result;
+	};
+
+	OPTIONS_MARKED.renderer = customRenderer;
+}
+
 var lexer = new marked.Lexer(OPTIONS_MARKED);
 var parser = new marked.Parser(OPTIONS_MARKED);
-marked.Parser.prototype.tok = replacementTok.bind(parser);
-
-if (enableAttributes) {
-	addMarkedAttributesSupport(lexer);
-}
 
 function traverse_tree(source, destination) {
 	var filenames = fs.readdirSync(source);
@@ -183,28 +259,6 @@ function traverse_tree(source, destination) {
 console.log("");
 traverse_tree(sourceDir, destinationDir);
 
-function addMarkedAttributesSupport(lexer) {
-	var markedLexerTokenFn = marked.Lexer.prototype.token.bind(lexer);
-	marked.Lexer.prototype.token = function(src, top) {
-		var tokens = markedLexerTokenFn(src, top); /* call marked's original lexer function */
-		tokens.forEach(function(token) { /* look through the gen'd tokens for attributes */
-			var text = token.text;
-			if (text) {
-				var attributeStartIndex = text.lastIndexOf("{:");
-				if (attributeStartIndex !== -1) {
-					var endIndex = text.lastIndexOf("}");
-					if (endIndex === text.length - 1) {
-						/* found attribute(s), add them to the token and remove the string from the token's text */
-						token.attributes = " " + text.substring(attributeStartIndex + 2, text.length - 1);
-						token.text = text.substring(0, attributeStartIndex);
-					}
-				}
-			}
-		});
-		return tokens;
-	};
-}
-
 function readFile(fd) {
 	var readStat = fs.fstatSync(fd);
 	var readBlockSize = readStat.blksize || 4096;
@@ -237,188 +291,3 @@ function writeFile(fd, buffer) {
 	} while (totalWriteCount < buffer.length);
 	return true;
 }
-
-/*
- * The following function is a copy of marker's tok() function except where noted
- * by the "added/modified" comments
- */
-function replacementTok() {
-  switch (this.token.type) {
-    case 'space': {
-      return '';
-    }
-    case 'hr': {
-      return '<hr'
-        + (this.token.attributes || "") // added
-        + '>\n';
-    }
-    case 'heading': {
-      return '<h'
-        + this.token.depth
-        + (this.token.attributes || "") // added
-        + '>'
-        + this.inline.output(this.token.text)
-        + '</h'
-        + this.token.depth
-        + '>\n';
-    }
-    case 'code': {
-      if (this.options.highlight) {
-        var code = this.options.highlight(this.token.text, this.token.lang);
-        if (code != null && code !== this.token.text) {
-          this.token.escaped = true;
-          this.token.text = code;
-        }
-      }
-
-      if (!this.token.escaped) {
-        this.token.text = escape(this.token.text, true);
-      }
-
-      return '<pre><code'
-        + (this.token.lang
-        ? ' class="'
-        + this.options.langPrefix
-        + this.token.lang
-        + '"'
-        : '')
-        + (this.token.attributes || "") // added
-        + '>'
-        + this.token.text
-        + '</code></pre>\n';
-    }
-    case 'table': {
-      var body = ''
-        , heading
-        , i
-        , row
-        , cell
-        , j;
-
-      // header
-      body += '<thead>\n<tr>\n';
-      for (i = 0; i < this.token.header.length; i++) {
-        heading = this.inline.output(this.token.header[i]);
-        body += this.token.align[i]
-          ? '<th align="' + this.token.align[i] + '">' + heading + '</th>\n'
-          : '<th>' + heading + '</th>\n';
-      }
-      body += '</tr>\n</thead>\n';
-
-      // body
-      body += '<tbody>\n'
-      for (i = 0; i < this.token.cells.length; i++) {
-        row = this.token.cells[i];
-        body += '<tr>\n';
-        for (j = 0; j < row.length; j++) {
-          cell = this.inline.output(row[j]);
-          body += this.token.align[j]
-            ? '<td align="' + this.token.align[j] + '">' + cell + '</td>\n'
-            : '<td>' + cell + '</td>\n';
-        }
-        body += '</tr>\n';
-      }
-      body += '</tbody>\n';
-
-      return '<table'
-        + (this.token.attributes || "") // added
-        + '>\n'
-        + body
-        + '</table>\n';
-    }
-    case 'blockquote_start': {
-      var body = '';
-
-      // added
-      /*
-       * Special case: Since blockquote is a container element, use it as an opportunity
-       * to define arbitrary kinds of container elements by looking for the "elementKind".
-       * attribute in its last child.  This is very hacky, an alternative would be an
-       * extension to markdown's syntax, but will do this for now as a proof-of-concept.
-       */
-      var elementName = "blockquote";
-      var kindOfRegex = /elementKind=(['"])([^\1]+?)\1(.*?)>/;
-      var additionalAttributes;
-      while (this.next().type !== 'blockquote_end') {
-        var childText = this.tok();
-        var match = kindOfRegex.exec(childText);
-        if (match) {
-          /* this whole token is contributing properties to the parent element */
-          elementName = match[2];
-          additionalAttributes = match[3];
-        } else {
-          body += childText;
-        }
-      }
-
-      // modified
-      return '<' + elementName + (additionalAttributes ? ' ' + additionalAttributes.trim() : '') + '>\n'
-        + body
-        + '</' + elementName + '>\n';
-    }
-    case 'list_start': {
-      var type = this.token.ordered ? 'ol' : 'ul'
-        , body = '';
-
-      while (this.next().type !== 'list_end') {
-        body += this.tok();
-      }
-
-      return '<'
-        + type
-        + (this.token.attributes || "") // added
-        + '>\n'
-        + body
-        + '</'
-        + type
-        + '>\n';
-    }
-    case 'list_item_start': {
-      var body = '';
-
-      while (this.next().type !== 'list_item_end') {
-        body += this.token.type === 'text'
-          ? this.parseText()
-          : this.tok();
-      }
-
-      return '<li'
-        + (this.token.attributes || "") // added
-        + '>'
-        + body
-        + '</li>\n';
-    }
-    case 'loose_item_start': {
-      var body = '';
-
-      while (this.next().type !== 'list_item_end') {
-        body += this.tok();
-      }
-
-      return '<li'
-        + (this.token.attributes || "") // added
-        + '>'
-        + body
-        + '</li>\n';
-    }
-    case 'html': {
-      return !this.token.pre && !this.options.pedantic
-        ? this.inline.output(this.token.text)
-        : this.token.text;
-    }
-    case 'paragraph': {
-      return '<p'
-        + (this.token.attributes || "") // added
-        + '>'
-        + this.inline.output(this.token.text)
-        + '</p>\n';
-    }
-    case 'text': {
-      return '<p'
-        + (this.token.attributes || "") // added
-        + '>'
-        + this.parseText()
-        + '</p>\n';
-    }
-  }
-};
