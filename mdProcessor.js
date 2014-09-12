@@ -13,7 +13,8 @@ var path = require('path');
 var marked = require('marked');
 
 var EXTENSION_HTML = ".html";
-var EXTENSION_MARKDOWN_REGEX = /\.md$/g;
+var EXTENSION_MARKDOWN = ".md";
+var EXTENSION_MARKDOWN_REGEX = /\.md$/gi;
 var OPTIONS_MARKED = {sanitize: true, tables: true, headerPrefix: ""};
 var SWITCH_SOURCEDIR = "--sourceDir";
 var SWITCH_DESTDIR = "--destDir";
@@ -22,6 +23,7 @@ var SWITCH_OVERWRITE = "-overwrite";
 var SWITCH_ATTRIBUTES = "-enableAttributes";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
+var COPY_EXTENSIONS = [EXTENSION_HTML, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg"];
 
 var sourceDir, destinationDir, baseURL, overwrite, enableAttributes, headerFile, footerFile, headerText, footerText;
 
@@ -178,7 +180,8 @@ function traverse_tree(source, destination) {
 			} else {
 				var outputFilename = current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML);
 				var destinationPath = path.join(destination, outputFilename);
-				if (path.extname(current) === ".md") {
+				var extension = path.extname(current).toLowerCase();
+				if (extension === EXTENSION_MARKDOWN) {
 					fs.open(sourcePath, "r", null, function(readErr, readFd) {
 						if (readErr) {
 							console.log("*** Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
@@ -220,7 +223,7 @@ function traverse_tree(source, destination) {
 							fs.close(readFd);
 						}
 					});
-				} else if (path.extname(current) === ".html" || path.extname(current) === ".css") {
+				} else if (COPY_EXTENSIONS.indexOf(extension) !== -1) {
 					fs.open(sourcePath, "r", null, function(readErr, readFd) {
 						if (readErr) {
 							console.log("Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
