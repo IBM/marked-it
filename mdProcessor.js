@@ -224,33 +224,18 @@ function traverse_tree(source, destination) {
 						}
 					});
 				} else if (COPY_EXTENSIONS.indexOf(extension) !== -1) {
-					fs.open(sourcePath, "r", null, function(readErr, readFd) {
-						if (readErr) {
-							console.log("Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
-						} else {
-							var fileText = readFile(readFd);
-							if (!fileText) {
-								console.log("Failed to read " + sourcePath);
-							} else {
-								var outBuffer = new Buffer(fileText);
-								fs.open(destinationPath, overwrite ? "w" : "wx", null, function(writeErr, writeFd) {
-									if (writeErr) {
-										console.log("Failed to open file to write: " + sourcePath + "\n" + writeErr.toString());
-									} else {
-										var success = writeFile(writeFd, outBuffer);										
-										if (success) {
-											console.log("-->Copied: " + sourcePath);
-										} else {
-											console.log("Failed to write " + destinationPath);
-										}
-										fs.close(writeFd);
-									}
-								});
-								
-							}
-							fs.close(readFd);
-						}
+					var readStream = fs.createReadStream(sourcePath);
+					readStream.on("error", function(error) {
+						console.log("Failed to read " + sourcePath + "\n" + error.toString());
 					});
+					var writeStream = fs.createWriteStream(destinationPath);
+					writeStream.on("error", function(error) {
+						console.log("Failed to write: " + destinationPath + "\n" + error.toString());
+					});
+					writeStream.on("close", function() {
+						console.log("-->Copied: " + sourcePath);
+					});
+					readStream.pipe(writeStream);
 				} else {
 					console.log("--> Skipped: " + sourcePath);
 				}
@@ -266,6 +251,9 @@ function readFile(fd) {
 	var readStat = fs.fstatSync(fd);
 	var readBlockSize = readStat.blksize || 4096;
 	var fileSize = readStat.size;
+	if (!fileSize) {
+		return "";
+	}
 	var inBuffer = new Buffer(fileSize);
 	var totalReadCount = 0;
 	do {
