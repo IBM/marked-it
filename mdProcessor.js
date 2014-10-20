@@ -132,7 +132,7 @@ if (enableAttributes) {
 				elementName = match[2];
 				attributes = attributes.replace(match[0], "").trim();
 			}
-			return "<" + elementName + " " + attributes + ">\n" + quote + "\n<" + elementName + ">\n";
+			return "<" + elementName + " " + attributes + ">\n" + quote + "\n</" + elementName + ">\n";
 		}
 
 		/* no attributes to handle, so just return the default renderer's text */
