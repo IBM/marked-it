@@ -3,8 +3,6 @@ var marked = require('marked');
 
 var attributeDefinitionLists = {};
 
-/* the exported function + 2 helpers */
-
 var inlineAttributeLists = [];
 var blockAttributeRegex = /(^|\n)(([ \t>]*)(\{[ ]{0,3}:(?:\\\}|[^\}])*\})[ \t]*\r?\n)/g;
 
@@ -13,20 +11,13 @@ function generate(text, enableExtensions, baseURL) {
 		marked.InlineLexer.prototype.outputLink = baseURL;
 	}
 
-//	var accumulatedDeletions = [];
-	
 	if (enableExtensions) {
 		var attributeLists = [];
-		var index = 0;
-//		var deletionCount = 0;
 		var match = blockAttributeRegex.exec(text);
 		while (match) {
 			var index = match.index + match[1].length + match[3].length;
 			var lineStart = match.index + match[1].length; //getLineStart(index, text);
 			var lineEnd = match.index + match[0].length;
-//			var startBound = match.index + match[1].length;
-//			deletionCount += lineEnd - startBound;
-//			accumulatedDeletions[startBound] = deletionCount;
 			attributeLists.push({index: index, lineStart: lineStart, match: match});
 			text = text.substring(0, lineStart) + text.substring(lineEnd);
 			blockAttributeRegex.lastIndex = match.index;
@@ -51,39 +42,17 @@ function generate(text, enableExtensions, baseURL) {
 	var rootBlock = new Block(bounds, null, null, null, null, null, null, text.substring(bounds.contentStart, bounds.end));
 	
 	inlineAttributeLists.forEach(function(current) {
-		var index = current.index;
-		
-//		if (current.match[3].length && !/^[ ]{0,3}$/.test(current.match[3])) {
-			/*
-			 * The inline attribute list appears to be in a blockquote or code block.  If
-			 * the previous/next line is indented identically then move the index of this
-			 * list within its block so that it will apply its previous/next contained block.
-			 */
-			var tryNextLine = true;
-			if (lineStart) {
-				/* not on the first line */
-				var previousLineStart = getLineStart(text, current.lineStart - 1); /* backtrack to start of previous line */
-				var previousLine = text.substring(previousLineStart, current.lineStart - 1);
-				if (!previousLine.indexOf(current.match[3]) && /\S+/.test(previousLine.substring(current.match[3].length))) {
-					/* the previous line is not "blank" (excluding indentation characters) */
-					tryNextLine = false;
-//					if (text.indexOf(current.match[3], previousLineStart) === previousLineStart) {
-						/* move the index back into the previous line's block */
-						index = previousLineStart + current.match[3].length;
-//					}
-				}
+		index = current.index;
+
+		if (lineStart) {
+			/* not on the first line */
+			var previousLineStart = getLineStart(text, current.lineStart - 1); /* backtrack to start of previous line */
+			var previousLine = text.substring(previousLineStart, current.lineStart - 1);
+			if (!previousLine.indexOf(current.match[3]) && /\S+/.test(previousLine.substring(current.match[3].length))) {
+				/* the previous line is not "blank" (excluding indentation characters), move the index back into the previous line's block */
+				index = previousLineStart + current.match[3].length;
 			}
-//			if (tryNextLine) {
-//				/*
-//				 * Since all attribute lines are removed from the source, the IAL's indexes are directly applicable
-//				 * to the "next" line of non-IAL text.
-//				 */
-//				if (text.indexOf(current.match[3], current.lineStart) === current.lineStart) {
-//					/* move the index into the next line's block */
-//					index = nextLineStart + 0.5;
-//				}
-//			}
-//		}
+		}
 
 		var adjacentBlock = findAdjacentBlock2(rootBlock, text, /*current*/ index);
 		if (adjacentBlock) {
@@ -388,7 +357,7 @@ function computeAttributes(inlineAttributes) {
 }
 
 markedOptions.renderer = customRenderer;
-var lexer = new marked.Lexer(markedOptions);
+//var lexer = new marked.Lexer(markedOptions);
 var parser = new marked.Parser(markedOptions);
 
 var tokensStack = [];
@@ -399,7 +368,7 @@ marked.Parser.prototype.tok = function() {
 //		console.log("push " + this.token.type + "[" + asdf(tokensStack) + "]");
 	}
 	return originalTok();
-}
+};
 
 marked.Parser.prototype.parseText = function() {
 	var body = "";
@@ -420,14 +389,6 @@ marked.Parser.prototype.parseText = function() {
 	return this.inline.output(body);
 };
 
-function asdf(tokensStack) {
-	var result = "";
-	tokensStack.forEach(function(current) {
-		result += current.type + ",";
-	});
-	return result;
-}
-
 /* the following is based on functions in Orion's MarkdownEditor.js */
 
 var _CR = "\r";
@@ -436,10 +397,9 @@ var _TYPEID_DEF = "meta.link.reference.def.markdown";
 var _TYPEID_HEADING = "markup.heading.markdown";
 var _TYPEID_LISTITEM = "markup.list.item.markdown";
 var _TYPEID_PARAGRAPH = "markup.other.paragraph.markdown";
-var _atxDetectRegex = /\s*#/g;
+var _atxDetectRegex = /[>\s]*#/g;
 var _blockquoteStartRegex = /[ \t]*>[ \t]?/g;
 var _hrRegex = /([ \t]*[-*_]){3,}/g;
-var _htmlNewlineRegex = /\n\s*\S[\s\S]*$/g;
 var _newlineRegex = /\n/g;
 var _spacesAndTabsRegex = /[ \t]*/g;
 var _whitespaceRegex = /\s+/g;
@@ -840,7 +800,7 @@ function Block(bounds, typeId, parent, startToken, endToken, tokens, seedTokens,
 	this.tokens = tokens;
 	this.seedTokens = seedTokens;
 	this._subBlocks = computeBlocks(text, this, this.contentStart);
-};
+}
 
 Block.prototype = {
 	getBlocks: function() {
