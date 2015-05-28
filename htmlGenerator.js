@@ -1,0 +1,851 @@
+var libxmljs = require('libxmljs');
+var marked = require('marked');
+
+var attributeDefinitionLists = {};
+
+/* the exported function + 2 helpers */
+
+var inlineAttributeLists = [];
+var blockAttributeRegex = /(^|\n)(([ \t>]*)(\{[ ]{0,3}:(?:\\\}|[^\}])*\})[ \t]*\r?\n)/g;
+
+function generate(text, enableExtensions, baseURL) {
+	if (baseURL) {
+		marked.InlineLexer.prototype.outputLink = baseURL;
+	}
+
+//	var accumulatedDeletions = [];
+	
+	if (enableExtensions) {
+		var attributeLists = [];
+		var index = 0;
+//		var deletionCount = 0;
+		var match = blockAttributeRegex.exec(text);
+		while (match) {
+			var index = match.index + match[1].length + match[3].length;
+			var lineStart = match.index + match[1].length; //getLineStart(index, text);
+			var lineEnd = match.index + match[0].length;
+//			var startBound = match.index + match[1].length;
+//			deletionCount += lineEnd - startBound;
+//			accumulatedDeletions[startBound] = deletionCount;
+			attributeLists.push({index: index, lineStart: lineStart, match: match});
+			text = text.substring(0, lineStart) + text.substring(lineEnd);
+			blockAttributeRegex.lastIndex = match.index;
+			match = blockAttributeRegex.exec(text);
+		}
+
+		var refNameRegex = /\{[ ]{0,3}:([^:]+):([^}]*)/;
+		var attributeListContentRegex = /\{[ ]{0,3}:([^}]*)/;
+		attributeLists.forEach(function(current) {
+			var refNameMatch = refNameRegex.exec(current.match[4]);
+			if (refNameMatch) {
+				attributeDefinitionLists[refNameMatch[1]] = refNameMatch[2];
+			} else {
+				var content = attributeListContentRegex.exec(current.match[4]);
+				inlineAttributeLists.push({index: current.index, lineStart: current.lineStart, content: content[1].trim(), match: current.match});
+			}
+		});
+	}
+
+	var length = text.length;
+	var bounds = {start: 0, contentStart: 0, contentEnd: length, end: length};
+	var rootBlock = new Block(bounds, null, null, null, null, null, null, text.substring(bounds.contentStart, bounds.end));
+	
+	inlineAttributeLists.forEach(function(current) {
+		var index = current.index;
+		
+//		if (current.match[3].length && !/^[ ]{0,3}$/.test(current.match[3])) {
+			/*
+			 * The inline attribute list appears to be in a blockquote or code block.  If
+			 * the previous/next line is indented identically then move the index of this
+			 * list within its block so that it will apply its previous/next contained block.
+			 */
+			var tryNextLine = true;
+			if (lineStart) {
+				/* not on the first line */
+				var previousLineStart = getLineStart(text, current.lineStart - 1); /* backtrack to start of previous line */
+				var previousLine = text.substring(previousLineStart, current.lineStart - 1);
+				if (!previousLine.indexOf(current.match[3]) && /\S+/.test(previousLine.substring(current.match[3].length))) {
+					/* the previous line is not "blank" (excluding indentation characters) */
+					tryNextLine = false;
+//					if (text.indexOf(current.match[3], previousLineStart) === previousLineStart) {
+						/* move the index back into the previous line's block */
+						index = previousLineStart + current.match[3].length;
+//					}
+				}
+			}
+//			if (tryNextLine) {
+//				/*
+//				 * Since all attribute lines are removed from the source, the IAL's indexes are directly applicable
+//				 * to the "next" line of non-IAL text.
+//				 */
+//				if (text.indexOf(current.match[3], current.lineStart) === current.lineStart) {
+//					/* move the index into the next line's block */
+//					index = nextLineStart + 0.5;
+//				}
+//			}
+//		}
+
+		var adjacentBlock = findAdjacentBlock2(rootBlock, text, /*current*/ index);
+		if (adjacentBlock) {
+			adjacentBlock.inlineAttributes = adjacentBlock.inlineAttributes || [];
+			adjacentBlock.inlineAttributes.push(current.content);
+		}
+	});
+
+	var blocks = rootBlock.getBlocks();
+	var html = "";
+	blocks.forEach(function(current) {
+		var tokens = [];
+		accumulateTokens(current, tokens);
+		tokens.links = {}; // TODO !!!
+		html += parser.parse(tokens);
+	});
+	return html;
+}
+
+function accumulateTokens(block, _result) {
+	/*
+	 * A block has either a set of its own content tokens, or a start/
+	 * endToken pair and therefore likely child blocks and tokens.
+	 */
+	if (block.tokens) {
+		block.tokens[0].inlineAttributes = block.inlineAttributes;
+		Array.prototype.push.apply(_result, block.tokens);
+		return;
+	}
+
+	if (!block.startToken || !block.endToken) {
+		return; /* should not happen */
+	}
+
+	block.startToken.inlineAttributes = block.inlineAttributes;
+	_result.push(block.startToken);
+	var subBlocks = block.getBlocks();
+	subBlocks.forEach(function(current) {
+		accumulateTokens(current, _result);
+	});
+	_result.push(block.endToken);
+}
+
+function binarySearch(array, offset, inclusive, low, high) {
+	var index;
+	if (low === undefined) { low = -1; }
+	if (high === undefined) { high = array.length; }
+	while (high - low > 1) {
+		index = Math.floor((high + low) / 2);
+		if (offset <= array[index].start) {
+			high = index;
+		} else if (inclusive && offset < array[index].end) {
+			high = index;
+			break;
+		} else {
+			low = index;
+		}
+	}
+	return high;
+}
+
+//function adjustIndex(index, accumulatedDeletions) {
+//	for (var i = index; i >= 0; i--) {
+//		if (accumulatedDeletions[i]) {
+//			return index - accumulatedDeletions[i];
+//		}
+//	}
+//	return index;
+//}
+
+function findAdjacentBlock(parentBlock, text, ial) {
+	var ialLineStart = ial.lineStart;
+	var index = ial.index;
+	if (ialLineStart) {
+		/* not the first line */
+		var previousLineStart = getLineStart(text, ialLineStart - 1);
+		var previousLineText = text.substring(previousLineStart, ialLineStart - 1);
+		if (previousLineText.indexOf(ial.match[3]) === 0 && previousLineText.length > ial.match[3].length) {
+			/* the previous line is not "blank" (excluding indentation characters) */
+			index = previousLineStart + ial.match[3].length - 0.5;
+		}
+	}
+
+	var block = findBlock(parentBlock, index);
+	var blocks = block.getBlocks();
+	for (var i = 0; i < blocks.length; i++) {
+		if (blocks[i].start <= Math.ceil(index) && index < blocks[i].end + 1) {			
+			if (blocks[i].start === Math.ceil(index) || Math.ceil(index) === blocks[i].end) {
+				return blocks[i];
+			} else {
+				return findAdjacentBlock(blocks[i], text, ial);
+			}
+		}
+	}
+	return null;
+}
+
+function findAdjacentBlock2(parentBlock, text, index) {
+//	var ialLineStart = ial.lineStart;
+//	var index = ial.index;
+//	if (ialLineStart) {
+//		/* not the first line */
+//		var previousLineStart = getLineStart(text, ialLineStart - 1);
+//		var previousLineText = text.substring(previousLineStart, ialLineStart - 1);
+//		if (previousLineText.indexOf(ial.match[3]) === 0 && previousLineText.length > ial.match[3].length) {
+//			/* the previous line is not "blank" (excluding indentation characters) */
+//			index = previousLineStart + ial.match[3].length - 0.5;
+//		}
+//	}
+
+//	var block = findBlock(parentBlock, index);
+	var blocks = parentBlock.getBlocks();
+	for (var i = 0; i < blocks.length; i++) {
+		if (blocks[i].start <= index && index < blocks[i].end) {
+			var blockStartLineStart = getLineStart(text, blocks[i].start);
+			var indexLineStart = getLineStart(text, index);
+			if (blocks[i].start - blockStartLineStart === index - indexLineStart && text.substring(blockStartLineStart, blocks[i].start) === text.substring(indexLineStart, index)) {			
+//			if (blocks[i].start === index) {
+				return blocks[i];
+			} else {
+				return findAdjacentBlock2(blocks[i], text, index);
+			}
+		}
+	}
+	return null;
+}
+
+function findBlock(parentBlock, offset) {
+	var blocks = parentBlock.getBlocks();
+	if (!blocks.length) {
+		return parentBlock;
+	}
+
+	var index = binarySearch(blocks, offset, true);
+	if (index < blocks.length && blocks[index].start <= offset && offset <= blocks[index].end - 1) {
+		return findBlock(blocks[index], offset);
+	}
+	return parentBlock;
+}
+
+/* create the marked parser and its custom renderer */
+
+var markedOptions = {tables: true, gfm: true, headerPrefix: "", xhtml: true};
+
+var customRenderer = new marked.Renderer();
+customRenderer.heading = function(text, level, raw) {
+	var result = marked.Renderer.prototype.heading.call(this, text, level, raw);
+	return applyToken(result, tokensStack.pop());
+};
+customRenderer.code = function(code, lang, escaped) {
+	var result = marked.Renderer.prototype.code.call(this, code, lang, escaped);
+	return applyToken(result, tokensStack.pop());
+};
+customRenderer.blockquote = function(quote) {
+	var result = marked.Renderer.prototype.blockquote.call(this, quote);
+	return applyToken(result, tokensStack.pop());
+};
+customRenderer.html = function(html) {
+	var result = marked.Renderer.prototype.html.call(this, html);
+	return applyToken(result, tokensStack.pop());
+};
+customRenderer.hr = function() {
+	var result = marked.Renderer.prototype.hr.call(this);
+	return applyToken(result, tokensStack.pop());
+};
+customRenderer.list = function(body, ordered) {
+	var result = marked.Renderer.prototype.list.call(this, body, ordered);
+	return applyToken(result, tokensStack.pop());
+};
+customRenderer.listitem = function(text) {
+	var result = marked.Renderer.prototype.listitem.call(this, text);
+	return applyToken(result, tokensStack.pop());
+};
+customRenderer.paragraph = function(text) {
+//	var match = blockAttributeRegex.exec(text);
+//	if (match && match[0].length === text.length) {
+//		return "";
+//	}
+	var result = marked.Renderer.prototype.paragraph.call(this, text);
+	return applyToken(result, tokensStack.pop());
+//	return result;
+};
+customRenderer.table = function(header, body) {
+	var result = marked.Renderer.prototype.table.call(this, header, body);
+	return applyToken(result, tokensStack.pop());
+};
+//customRenderer.tablerow = function(content) {
+//	var result = marked.Renderer.prototype.tablerow.call(this, content);
+//	return applyToken(result, tokensStack.pop());
+//};
+//customRenderer.tablecell = function(content, flags) {
+//	var result = marked.Renderer.prototype.tablecell.call(this, content, flags);
+//	return applyToken(result, tokensStack.pop());
+//};
+
+/* span-level elements */
+
+//customRenderer.strong = function(text) {
+//	var result = marked.Renderer.prototype.strong.call(this, text);
+//	return applyToken(result, tokensStack.pop());
+//};
+//customRenderer.em = function(text) {
+//	var result = marked.Renderer.prototype.em.call(this, text);
+//	return applyToken(result, tokensStack.pop());
+//};
+//customRenderer.codespan = function(text) {
+//	var result = marked.Renderer.prototype.codespan.call(this, text);
+//	return applyToken(result, tokensStack.pop());
+//};
+//customRenderer.br = function() {
+//	var result = marked.Renderer.prototype.br.call(this);
+//	return applyToken(result, tokensStack.pop());
+//};
+//customRenderer.del = function(text) {
+//	var result = marked.Renderer.prototype.del.call(this, text);
+//	return applyToken(result, tokensStack.pop());
+//};
+//customRenderer.link = function(href, title, text) {
+//	var result = marked.Renderer.prototype.link.call(this, href, title, text);
+//	return applyToken(result, tokensStack.pop());
+//};
+//customRenderer.image = function(href, title, text) {
+//	var result = marked.Renderer.prototype.image.call(this, href, title, text);
+//	return applyToken(result, tokensStack.pop());
+//};
+
+function applyToken(htmlString, token) {
+//	console.log("pop " + token.type + " [" + asdf(tokensStack) + "]");
+	var endsWithNL = /\n$/.test(htmlString);
+	var doc = libxmljs.parseXml(htmlString);
+	var root = doc.root();
+	if (token.inlineAttributes) {
+		var attributes = computeAttributes(token.inlineAttributes);
+		var keys = Object.keys(attributes);
+		keys.forEach(function(current) {
+			var newAttribute = {};
+			newAttribute[current] = attributes[current];
+			root.attr(newAttribute);
+		});
+	}
+	return root.toString() + (endsWithNL ? "\n" : "");
+}
+
+function computeAttributes(inlineAttributes) {
+	var result = {};
+	var idRegex = /#([\S]+)/;
+	var classRegex = /\.(-?[_a-zA-Z]+[_a-zA-Z0-9-]*)/;
+	var attributeRegex = /([^\/>"'=]+)=(['"])([^\2]+)\2/;
+
+	/*
+	 * Determine all attributes first, then build the result object from them by applying
+	 * all inherited attributes first, so that locally-defined attributes will override
+	 * inherited ones.
+	 */
+	var inheritedAttributes = [];
+	var localAttributes = [];
+
+	inlineAttributes.forEach(function(current) {
+		var segments = current.split(/\s/g);
+		segments.forEach(function(current) {
+			if (current.length) {
+				var match = idRegex.exec(current);
+				if (match) {
+					localAttributes.push({'id': match[1]});
+				} else {
+					match = classRegex.exec(current);
+					if (match) {
+						localAttributes.push({'class': match[1]});
+					} else {
+						match = attributeRegex.exec(current);
+						if (match) {
+							var object = {};
+							object[match[1]] = match[3];
+							localAttributes.push(object);
+						} else {
+							if (attributeDefinitionLists[current]) {
+								var attributes = computeAttributes([attributeDefinitionLists[current]]);
+								var keys = Object.keys(attributes);
+								keys.forEach(function(key) {
+									object = {};
+									object[key] = attributes[key];
+									inheritedAttributes.push(object);
+								});
+							}
+						}
+					}
+				}
+			}
+		});
+	});
+
+	inheritedAttributes.forEach(function(current) {
+		var key = Object.keys(current)[0];
+		result[key] = current[key];
+	});
+	localAttributes.forEach(function(current) {
+		var key = Object.keys(current)[0];
+		result[key] = current[key];
+	});
+
+	return result;
+}
+
+markedOptions.renderer = customRenderer;
+var lexer = new marked.Lexer(markedOptions);
+var parser = new marked.Parser(markedOptions);
+
+var tokensStack = [];
+var originalTok = marked.Parser.prototype.tok.bind(parser);
+marked.Parser.prototype.tok = function() {
+	if (this.token.type !== "space") {
+		tokensStack.push(this.token);
+//		console.log("push " + this.token.type + "[" + asdf(tokensStack) + "]");
+	}
+	return originalTok();
+}
+
+marked.Parser.prototype.parseText = function() {
+	var body = "";
+	var currentText = this.token.text;
+	var match = blockAttributeRegex.exec(currentText);
+	if (!match || match[0].length !== currentText.length) {
+		body += currentText;
+	}
+
+	while (this.peek().type === 'text') {
+		currentText = this.next().text;
+		match = blockAttributeRegex.exec(currentText);
+		if (!match || match[0].length !== currentText.length) {
+			body += '\n' + currentText;
+		}
+	}
+
+	return this.inline.output(body);
+};
+
+function asdf(tokensStack) {
+	var result = "";
+	tokensStack.forEach(function(current) {
+		result += current.type + ",";
+	});
+	return result;
+}
+
+/* the following is based on functions in Orion's MarkdownEditor.js */
+
+var _CR = "\r";
+var _NEWLINE = "\n";
+var _TYPEID_DEF = "meta.link.reference.def.markdown";
+var _TYPEID_HEADING = "markup.heading.markdown";
+var _TYPEID_LISTITEM = "markup.list.item.markdown";
+var _TYPEID_PARAGRAPH = "markup.other.paragraph.markdown";
+var _atxDetectRegex = /\s*#/g;
+var _blockquoteStartRegex = /[ \t]*>[ \t]?/g;
+var _hrRegex = /([ \t]*[-*_]){3,}/g;
+var _htmlNewlineRegex = /\n\s*\S[\s\S]*$/g;
+var _newlineRegex = /\n/g;
+var _spacesAndTabsRegex = /[ \t]*/g;
+var _whitespaceRegex = /\s+/g;
+
+function advanceIndex(text, token, index) {
+	if (token.text) {
+		/*
+		 * Must split the text and crawl through each of its parts because
+		 * the token text may not exactly match our source text (in
+		 * particular because marked converts all tabs to spaces).
+		 */
+		_whitespaceRegex.lastIndex = 0;
+		var segments = token.text.split(_whitespaceRegex);
+		segments.forEach(function(current) {
+			if (current.length) {
+				index = text.indexOf(current, index) + current.length;
+			}
+		});
+	} else if (token.type === "blockquote_start") { //$NON-NLS-0$
+		_blockquoteStartRegex.lastIndex = index;
+		var match = _blockquoteStartRegex.exec(text);
+		index = match.index + match[0].length;
+	} else if (token.type === "hr") { //$NON-NLS-0$
+		_hrRegex.lastIndex = index;
+		match = _hrRegex.exec(text);
+		index = match.index + match[0].length;
+	} else if (token.type === "space") { //$NON-NLS-0$
+		/*
+		 * The following is intentionally commented, it's not needed in this context
+		 * of processing a full markdown file from beginning-to-end because computeBlocks()
+		 * does a whitespace eat for every token.
+		 */
+//		_newlineRegex.lastIndex = index;
+//		match = _newlineRegex.exec(text);
+//		index = match.index + match[0].length;
+	} else if (token.type === "table") { //$NON-NLS-0$
+		segments = token.header.slice();
+		token.cells.forEach(function(current) {
+			segments = segments.concat(current);
+		});
+		segments.forEach(function(current) {
+			if (current.length) {
+				index = text.indexOf(current, index) + current.length;
+			}
+		});
+	} else if (token.type.indexOf("_item_start") !== -1) { //$NON-NLS-0$
+		/* marked.Lexer.rules.normal.bullet is not global, so cannot set its lastIndex */
+		text = text.substring(index);
+		match = marked.Lexer.rules.normal.bullet.exec(text);
+		if (match) {
+			index += match.index + match[0].length;
+		}
+	}
+	return index;
+}
+
+function computeBlocks(text, block, offset) {
+	var result = [];
+	var tokens;
+
+	if (block.typeId) {
+		/* parent is a block other than the root block */
+		if (block.typeId !== "markup.quote.markdown" && //$NON-NLS-0$
+			block.typeId !== "markup.list.markdown" && //$NON-NLS-0$
+			block.typeId !== _TYPEID_LISTITEM) {
+				/* no other kinds of blocks have sub-blocks, so just return */
+				return result;
+		}
+
+		tokens = block.seedTokens;
+		block.seedTokens = null;
+	}
+
+	var index = 0;
+	tokens = tokens || marked.lexer(text, markedOptions); // TODO is this redundant with the lexer instance above?
+
+	for (var i = 0; i < tokens.length; i++) {
+		var bounds = null, typeId = null, end = null, newlines = null;
+		var startToken = null, contentToken = null, endToken = null;
+		var seedTokens = null;
+
+		typeId = null;
+		_whitespaceRegex.lastIndex = index;
+		var whitespaceResult = _whitespaceRegex.exec(text);
+		if (whitespaceResult && whitespaceResult.index === index) {
+			index += whitespaceResult[0].length;
+		}
+
+		if (tokens[i].type === "heading") { //$NON-NLS-0$
+			_atxDetectRegex.lastIndex = index;
+			var match = _atxDetectRegex.exec(text);
+			var isAtx = match && match.index === index;
+			var lineEnd = getLineEnd(text, index);
+			end = isAtx ? lineEnd : getLineEnd(text, index, 1);
+			bounds = {
+				start: index,
+				contentStart: index + (isAtx ? tokens[i].depth : 0),
+				contentEnd: lineEnd,
+				end: end
+			};
+			typeId = _TYPEID_HEADING;
+			contentToken = tokens[i];
+			index = end;
+		} else if (tokens[i].type === "paragraph" || tokens[i].type === "text") { //$NON-NLS-1$ //$NON-NLS-0$
+			end = advanceIndex(text, tokens[i], index);
+			end = getLineEnd(text, end);
+
+			if (!isTop(block)) {
+				tokens[i].type = "text"; //$NON-NLS-0$
+			}
+			contentToken = tokens[i];
+
+			bounds = {
+				start: index,
+				contentStart: index,
+				contentEnd: end,
+				end: end
+			};
+			typeId = tokens[i].isHTML ? "markup.raw.html.markdown" : _TYPEID_PARAGRAPH; //$NON-NLS-0$
+			index = end;
+		} else if (tokens[i].type === "def") { //$NON-NLS-0$
+			var newlineCount = 0;
+			if (tokens[i].title) {
+				var titleIndex = text.indexOf(tokens[i].title, index + 1);
+				var substring = text.substring(index, titleIndex);
+				match = substring.match(_newlineRegex);
+				if (match) {
+					newlineCount = match.length;
+				}
+			}
+			end = getLineEnd(text, index, newlineCount);
+
+			contentToken = tokens[i];
+			bounds = {
+				start: index,
+				contentStart: index,
+				contentEnd: end,
+				end: end
+			};
+			typeId = _TYPEID_DEF;
+			index = end;
+		} else if (tokens[i].type === "blockquote_start" || tokens[i].type === "list_start") { //$NON-NLS-1$ //$NON-NLS-0$
+			/*
+			 * Use text contained in the tokens between the *_start and *_end
+			 * tokens to crawl through the text to determine the block's end bound.
+			 */
+
+			if (tokens[i].type === "blockquote_start") { //$NON-NLS-0$
+				endToken = "blockquote_end"; //$NON-NLS-0$
+				typeId = "markup.quote.markdown"; //$NON-NLS-0$
+			} else { /* list_start */
+				endToken = "list_end"; //$NON-NLS-0$
+				typeId = "markup.list.markdown"; //$NON-NLS-0$
+			}
+
+			var start = index;
+			/*
+			 * Note that *_start tokens can stack (eg.- a list within a list)
+			 * so must be sure to find the _matching_ end token.
+			 */
+			var j = i;
+			var stack = 0;
+			while (true) {
+				if (tokens[j].type === tokens[i].type) {
+					stack++; /* a start token */
+				} else if (tokens[j].type === endToken) {
+					if (!--stack) {
+						break;
+					}
+				}
+				index = advanceIndex(text, tokens[j], index);
+				j++;
+			}
+
+			/* claim the newline character that ends this element if there is one */
+			_newlineRegex.lastIndex = index;
+			match = _newlineRegex.exec(text);
+			if (match) {
+				index = match.index + match[0].length;
+				if (typeId === "markup.list.markdown") { //$NON-NLS-0$
+					/* for lists claim whitespace that starts the next line */
+					_spacesAndTabsRegex.lastIndex = index;
+					match = _spacesAndTabsRegex.exec(text);
+					if (match && match.index === index) {
+						index += match[0].length;
+					}
+				}
+			}
+
+			/* compute the block's contentStart bound */
+			if (typeId === "markup.quote.markdown") { //$NON-NLS-0$
+				_blockquoteStartRegex.lastIndex = start;
+				match = _blockquoteStartRegex.exec(text);
+				var contentStart = start + match[0].length;
+			} else {
+				/* marked.Lexer.rules.normal.bullet is not global, so cannot set its lastIndex */
+				var tempText = text.substring(start);
+				match = marked.Lexer.rules.normal.bullet.exec(tempText);
+				start += match.index;
+				contentStart = start;
+			}
+			index = Math.max(index, contentStart);
+			bounds = {
+				start: start,
+				contentStart: contentStart,
+				contentEnd: index,
+				end: index
+			};
+
+			startToken = tokens[i];
+			endToken = tokens[j];
+			seedTokens = tokens.slice(i + 1, j);
+			i = j;
+		} else if (tokens[i].type.indexOf("_item_start") !== -1) { //$NON-NLS-0$
+			/*
+			 * Use text contained in the tokens between the list_item_start and list_item_end
+			 * tokens to crawl through the text to determine the list item's end bound.
+			 */
+			start = index;
+
+			/*
+			 * Note that *_item_start tokens can stack (eg.- a list item within a list within a list
+			 * item) so must be sure to find the _matching_ end token.
+			 */
+			j = i;
+			stack = 0;
+			while (true) {
+				if (tokens[j].type === "list_item_start" || tokens[j].type === "loose_item_start") { //$NON-NLS-1$ //$NON-NLS-0$
+					stack++; /* a start token */
+				} else if (tokens[j].type === "list_item_end") { //$NON-NLS-0$
+					if (!--stack) {
+						break;
+					}
+				}
+				index = advanceIndex(text, tokens[j], index);
+				j++;
+			}
+
+			/* claim the newline character that ends this item if there is one */
+			_newlineRegex.lastIndex = index;
+			match = _newlineRegex.exec(text);
+			if (match) {
+				index = match.index + match[0].length;
+			}
+
+			/* compute the block's contentStart bound */
+
+			/* marked.Lexer.rules.normal.bullet is not global, so cannot set its lastIndex */
+			tempText = text.substring(start);
+			match = marked.Lexer.rules.normal.bullet.exec(tempText);
+			contentStart = start + match.index + match[0].length;
+			index = Math.max(index, contentStart);
+			bounds = {
+				start: start,
+				contentStart: contentStart,
+				contentEnd: index,
+				end: index
+			};
+
+			typeId = _TYPEID_LISTITEM;
+			startToken = tokens[i];
+			endToken = tokens[j];
+			seedTokens = tokens.slice(i + 1, j);
+			i = j;
+		} else if (tokens[i].type === "code") { //$NON-NLS-0$
+			/*
+			 * gfm fenced code blocks can be differentiated from markdown code blocks by the
+			 * presence of a "lang" property.
+			 */
+			if (tokens[i].hasOwnProperty("lang")) { //$NON-NLS-0$
+				// TODO create a block and syntax style it if a supported lang is provided
+				start = index;
+				newlines = tokens[i].text.match(_newlineRegex);
+				end = getLineEnd(text, index, 2 + (newlines ? newlines.length : 0));
+				typeId = "markup.raw.code.fenced.gfm"; //$NON-NLS-0$
+			} else {
+				start = getLineStart(text, index); /* backtrack to start of line */
+				newlines = tokens[i].text.match(_newlineRegex);
+				end = getLineEnd(text, index, newlines ? newlines.length : 0);
+				_whitespaceRegex.lastIndex = end;
+				match = _whitespaceRegex.exec(text);
+				if (match && match.index === end) {
+					end += match[0].length;
+				}
+				typeId = "markup.raw.code.markdown"; //$NON-NLS-0$
+			}
+
+			bounds = {
+				start: start,
+				contentStart: index,
+				contentEnd: end,
+				end: end
+			};
+			contentToken = tokens[i];
+			index = end;
+		} else if (tokens[i].type === "hr") { //$NON-NLS-0$
+			end = getLineEnd(text, index);
+			bounds = {
+				start: index,
+				contentStart: index,
+				contentEnd: end,
+				end: end
+			};
+			typeId = "markup.other.separator.markdown"; //$NON-NLS-0$
+			contentToken = tokens[i];
+			index = end;
+		} else if (tokens[i].type === "table") { //$NON-NLS-0$
+			end = getLineEnd(text, index, tokens[i].cells.length + 1);
+			bounds = {
+				start: index,
+				contentStart: index,
+				contentEnd: end,
+				end: end
+			};
+			if (isTop(block)) {
+				typeId = "markup.other.table.gfm"; //$NON-NLS-0$
+				contentToken = tokens[i];
+			} else {
+				/*
+				 * This can happen if the table's text is scanned by marked without the surrounding
+				 * context of its parent block (eg.- marked does not realize that the table text is
+				 * in a list item).  Create a text token with the table's text to be used by the parent
+				 * block.
+				 */
+				typeId = _TYPEID_PARAGRAPH;
+				contentToken = {type: "text", text: text.substring(index, end)}; //$NON-NLS-0$
+			}
+			index = end;
+		} else if (tokens[i].type === "space") { //$NON-NLS-0$
+			bounds = {
+				start: index,
+				contentStart: index,
+				contentEnd: index,
+				end: index
+			};
+			typeId = _TYPEID_PARAGRAPH;
+			contentToken = tokens[i];
+		}
+
+		if (typeId) {
+			bounds.start = bounds.start + offset;
+			bounds.contentStart = bounds.contentStart + offset;
+			bounds.contentEnd = bounds.contentEnd + offset;
+			bounds.end = bounds.end + offset;
+			var newBlock = new Block(bounds, typeId, block, startToken, endToken, contentToken ? [contentToken] : null, seedTokens, text.substring(bounds.contentStart - offset, bounds.end - offset));
+			result.push(newBlock);
+		}
+	}
+
+	return result;
+}
+
+function getLineEnd(text, index, lineSkip) {
+	lineSkip = lineSkip || 0;
+	while (true) {
+		_newlineRegex.lastIndex = index;
+		var result = _newlineRegex.exec(text);
+		if (!result) {
+			return text.length;
+		}
+		index = result.index + result[0].length;
+		if (!lineSkip--) {
+			return index;
+		}
+	}
+}
+
+function getLineStart(text, index) {
+	while (0 <= --index) {
+		var char = text.charAt(index);
+		if (char === _NEWLINE || char === _CR) {
+			return index + 1;
+		}
+	}
+	return 0;
+}
+
+function isTop(block) {
+	if (!block.typeId) {
+		return true;
+	}
+	/* marked treats blockquote contents as top-level */
+	if (block.typeId === "markup.quote.markdown") { //$NON-NLS-0$
+		return isTop(block.parent);
+	}
+	return false;
+}
+
+function Block(bounds, typeId, parent, startToken, endToken, tokens, seedTokens, text) {
+	this.start = bounds.start;
+	this.end = bounds.end;
+	this.contentStart = bounds.contentStart;
+	this.contentEnd = bounds.contentEnd;
+	this.typeId = typeId;
+	this.parent = parent;
+	this.startToken = startToken;
+	this.endToken = endToken;
+	this.tokens = tokens;
+	this.seedTokens = seedTokens;
+	this._subBlocks = computeBlocks(text, this, this.contentStart);
+};
+
+Block.prototype = {
+	getBlocks: function() {
+		return this._subBlocks;
+	}
+};
+
+module.exports.generate = generate;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials are made 
  * available under the terms of the Eclipse Public License v1.0 
  * (http://www.eclipse.org/legal/epl-v10.html), and the Eclipse Distribution 
@@ -10,22 +10,21 @@
 
 var fs = require('fs');
 var path = require('path');
-var marked = require('marked');
+var htmlGenerator = require('./htmlGenerator');
 
 var EXTENSION_HTML = ".html";
 var EXTENSION_MARKDOWN = ".md";
 var EXTENSION_MARKDOWN_REGEX = /\.md$/gi;
-var OPTIONS_MARKED = {sanitize: true, tables: true, gfm: true, headerPrefix: ""};
 var SWITCH_SOURCEDIR = "--sourceDir";
 var SWITCH_DESTDIR = "--destDir";
 var SWITCH_BASEURL = "--baseURL";
 var SWITCH_OVERWRITE = "-overwrite";
-var SWITCH_ATTRIBUTES = "-enableAttributes";
+var SWITCH_EXTENSIONS = "-disableExtensions";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
 var COPY_EXTENSIONS = [EXTENSION_HTML, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg"];
 
-var sourceDir, destinationDir, baseURL, overwrite, enableAttributes, headerFile, footerFile, headerText, footerText;
+var sourceDir, destinationDir, baseURL, overwrite, disableExtensions, headerFile, footerFile, headerText, footerText;
 
 var switchCounter = 0;
 process.argv.forEach(function(arg) {
@@ -38,7 +37,7 @@ process.argv.forEach(function(arg) {
 //		baseURL = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_OVERWRITE) === 0) {
 		overwrite = true;
-	} else if (arg.indexOf(SWITCH_ATTRIBUTES) === 0) {
+	} else if (arg.indexOf(SWITCH_EXTENSIONS) === 0) {
 		enableAttributes = true;
 	} else if (arg.indexOf(SWITCH_HEADERFILE) === 0 && arg.indexOf("=") !== -1) {
 		headerFile = arg.substring(arg.indexOf("=") + 1);
@@ -53,7 +52,7 @@ process.argv.forEach(function(arg) {
 });
 
 if (!sourceDir || !destinationDir) {
-	console.log("\nUsage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + "\n\t\t" + SWITCH_OVERWRITE + "\n\t\t" + SWITCH_ATTRIBUTES + "\n\t\t" + SWITCH_HEADERFILE + "=<headerSourceFile>" + "\n\t\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>" + "\n\t]");
+	console.log("\nUsage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + "\n\t\t" + SWITCH_OVERWRITE + "\n\t\t" + SWITCH_EXTENSIONS + "\n\t\t" + SWITCH_HEADERFILE + "=<headerSourceFile>" + "\n\t\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>" + "\n\t]");
 	process.exit();
 }
 
@@ -86,84 +85,6 @@ if (footerFile) {
 var writeStat = fs.statSync(destinationDir);
 var writeBlockSize = writeStat.blksize || 4096;
 
-if (baseURL) {
-	marked.InlineLexer.prototype.outputLink = baseURL;
-}
-
-if (enableAttributes) {
-	/* ---------- the custom generation code is in this block ---------- */
-
-	function escape(html, encode) { // copied from marked.js
-		return html
-			.replace(!encode ? /&(?!#?\w+;)/g : /&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#39;');
-	}
-
-	function unescape(html) {
-		return html
-			.replace(/&amp;/g, '&(?!#?\w+;)')
-			.replace(/&lt;/g, '<')
-			.replace(/&gt;/g, '>')
-			.replace(/&quot;/g, '"')
-			.replace(/&#39;/g, "'");
-	}
-
-	var customRenderer = new marked.Renderer();
-	customRenderer.blockquote = function(quote) {
-		/*
-		 * Since blockquote is a container element, use it as an opportunity to define arbitrary kinds of
-		 * container elements by looking for the "elementKind" attribute.  This is very hacky, an alternative
-		 * would be an extension to markdown's syntax, but will do this for now as a proof-of-concept.
-		 */
-		var elementName = "blockquote";
-		var attributesRegex = /<p>{:(.+)}<\/p>\n/;
-		var match = attributesRegex.exec(quote);
-		if (match) {
-			/* found attributes */
-			quote = quote.replace(match[0], "").trim();
-			var attributes = unescape(match[1]);
-			var kindOfRegex = /elementKind=(['"])([^\1]+?)\1/;
-			match = kindOfRegex.exec(attributes);
-			if (match) {
-				/* found an elementKind attribute, which is handled specially */
-				elementName = match[2];
-				attributes = attributes.replace(match[0], "").trim();
-			}
-			return "<" + elementName + " " + attributes + ">\n" + quote + "\n</" + elementName + ">\n";
-		}
-
-		/* no attributes to handle, so just return the default renderer's text */
-		return marked.Renderer.prototype.blockquote.call(this, quote);
-	};
-	customRenderer.heading = function(text, level, raw) {
-		var attributeStartIndex = raw.lastIndexOf("{:");
-		if (attributeStartIndex !== -1) {
-			var endIndex = raw.lastIndexOf("}");
-			if (endIndex === raw.length - 1) {
-				/* found attributes */
-				var attributes = " " + raw.substring(attributeStartIndex + 2, raw.length - 1);
-				raw = raw.substring(0, attributeStartIndex);
-				text = escape(raw);
-			}
-		}
-
-		var result = marked.Renderer.prototype.heading.call(this, text, level, raw);
-		if (attributes) {
-			/* hacky, making an assumption about the shape of the result string from the default renderer */
-			result = result.substring(0, 3) + attributes + result.substring(3);
-		}
-		return result;
-	};
-
-	OPTIONS_MARKED.renderer = customRenderer;
-}
-
-var lexer = new marked.Lexer(OPTIONS_MARKED);
-var parser = new marked.Parser(OPTIONS_MARKED);
-
 function traverse_tree(source, destination) {
 	var filenames = fs.readdirSync(source);
 	filenames.forEach(function(current) {
@@ -190,8 +111,7 @@ function traverse_tree(source, destination) {
 							if (!fileText) {
 								console.log("*** Failed to read " + sourcePath);
 							} else {
-								var tokens = lexer.lex(fileText, OPTIONS_MARKED);
-								var markdownText = parser.parse(tokens);
+								var markdownText = htmlGenerator.generate(fileText, !disableExtensions, baseURL);
 								if (!markdownText) {
 									console.log("*** Failed during conversion of markdown to HTML file " + sourcePath);
 								} else {
