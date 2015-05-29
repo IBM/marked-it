@@ -44,20 +44,34 @@ function generate(text, enableExtensions, baseURL) {
 	inlineAttributeLists.forEach(function(current) {
 		index = current.index;
 
-		if (lineStart) {
+		var checkNextLine = true;
+		if (current.lineStart) {
 			/* not on the first line */
 			var previousLineStart = getLineStart(text, current.lineStart - 1); /* backtrack to start of previous line */
 			var previousLine = text.substring(previousLineStart, current.lineStart - 1);
 			if (!previousLine.indexOf(current.match[3]) && /\S+/.test(previousLine.substring(current.match[3].length))) {
 				/* the previous line is not "blank" (excluding indentation characters), move the index back into the previous line's block */
+				checkNextLine = false;
 				index = previousLineStart + current.match[3].length;
 			}
 		}
+		if (checkNextLine) {
+			/* the "next" line is actually now the current line since all IAL lines have been removed from text */
+			var nextLineStart = current.lineStart;
+			var nextLineEnd = getLineEnd(text, nextLineStart);
+			var nextLine = text.substring(nextLineStart, nextLineEnd - 1);
+			if (nextLine.indexOf(current.match[3]) || !/\S+/.test(nextLine.substring(current.match[3].length))) {
+				/* the "next" line is "blank" (excluding indentation characters), so this IAL should not be applied anywhere */
+				index = -1;
+			}
+		}
 
-		var adjacentBlock = findAdjacentBlock2(rootBlock, text, /*current*/ index);
-		if (adjacentBlock) {
-			adjacentBlock.inlineAttributes = adjacentBlock.inlineAttributes || [];
-			adjacentBlock.inlineAttributes.push(current.content);
+		if (index !== -1) {
+			var adjacentBlock = findAdjacentBlock(rootBlock, text, index);
+			if (adjacentBlock) {
+				adjacentBlock.inlineAttributes = adjacentBlock.inlineAttributes || [];
+				adjacentBlock.inlineAttributes.push(current.content);
+			}
 		}
 	});
 
@@ -114,56 +128,7 @@ function binarySearch(array, offset, inclusive, low, high) {
 	return high;
 }
 
-//function adjustIndex(index, accumulatedDeletions) {
-//	for (var i = index; i >= 0; i--) {
-//		if (accumulatedDeletions[i]) {
-//			return index - accumulatedDeletions[i];
-//		}
-//	}
-//	return index;
-//}
-
-function findAdjacentBlock(parentBlock, text, ial) {
-	var ialLineStart = ial.lineStart;
-	var index = ial.index;
-	if (ialLineStart) {
-		/* not the first line */
-		var previousLineStart = getLineStart(text, ialLineStart - 1);
-		var previousLineText = text.substring(previousLineStart, ialLineStart - 1);
-		if (previousLineText.indexOf(ial.match[3]) === 0 && previousLineText.length > ial.match[3].length) {
-			/* the previous line is not "blank" (excluding indentation characters) */
-			index = previousLineStart + ial.match[3].length - 0.5;
-		}
-	}
-
-	var block = findBlock(parentBlock, index);
-	var blocks = block.getBlocks();
-	for (var i = 0; i < blocks.length; i++) {
-		if (blocks[i].start <= Math.ceil(index) && index < blocks[i].end + 1) {			
-			if (blocks[i].start === Math.ceil(index) || Math.ceil(index) === blocks[i].end) {
-				return blocks[i];
-			} else {
-				return findAdjacentBlock(blocks[i], text, ial);
-			}
-		}
-	}
-	return null;
-}
-
-function findAdjacentBlock2(parentBlock, text, index) {
-//	var ialLineStart = ial.lineStart;
-//	var index = ial.index;
-//	if (ialLineStart) {
-//		/* not the first line */
-//		var previousLineStart = getLineStart(text, ialLineStart - 1);
-//		var previousLineText = text.substring(previousLineStart, ialLineStart - 1);
-//		if (previousLineText.indexOf(ial.match[3]) === 0 && previousLineText.length > ial.match[3].length) {
-//			/* the previous line is not "blank" (excluding indentation characters) */
-//			index = previousLineStart + ial.match[3].length - 0.5;
-//		}
-//	}
-
-//	var block = findBlock(parentBlock, index);
+function findAdjacentBlock(parentBlock, text, index) {
 	var blocks = parentBlock.getBlocks();
 	for (var i = 0; i < blocks.length; i++) {
 		if (blocks[i].start <= index && index < blocks[i].end) {
@@ -173,7 +138,7 @@ function findAdjacentBlock2(parentBlock, text, index) {
 //			if (blocks[i].start === index) {
 				return blocks[i];
 			} else {
-				return findAdjacentBlock2(blocks[i], text, index);
+				return findAdjacentBlock(blocks[i], text, index);
 			}
 		}
 	}
