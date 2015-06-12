@@ -4,7 +4,9 @@ var marked = require('marked');
 var attributeDefinitionLists = {};
 
 var inlineAttributeLists = [];
-var blockAttributeRegex = /(^|\n)(([ \t>]*)(\{[ ]{0,3}:(?:\\\}|[^\}])*\})[ \t]*\r?\n)/g;
+var blockAttributeRegex = /(^|\n)(([ \t>]*)(\{:(?:\\\}|[^\}])*\})[ \t]*\r?\n)/g;
+var headerIALRegex = /\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
+var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
 
 function generate(text, enableExtensions, baseURL) {
 	if (baseURL) {
@@ -16,7 +18,7 @@ function generate(text, enableExtensions, baseURL) {
 		var match = blockAttributeRegex.exec(text);
 		while (match) {
 			var index = match.index + match[1].length + match[3].length;
-			var lineStart = match.index + match[1].length; //getLineStart(index, text);
+			var lineStart = match.index + match[1].length;
 			var lineEnd = match.index + match[0].length;
 			attributeLists.push({index: index, lineStart: lineStart, match: match});
 			text = text.substring(0, lineStart) + text.substring(lineEnd);
@@ -164,8 +166,19 @@ var markedOptions = {tables: true, gfm: true, headerPrefix: "", xhtml: true};
 
 var customRenderer = new marked.Renderer();
 customRenderer.heading = function(text, level, raw) {
+	var textMatch = headerIALRegex.exec(text);
+	if (textMatch) {
+		text = text.substring(0, textMatch.index).trim();
+		var rawMatch = headerIALRegex.exec(raw);
+		raw = raw.substring(0, rawMatch.index).trim();
+	}
 	var result = marked.Renderer.prototype.heading.call(this, text, level, raw);
-	return applyToken(result, tokensStack.pop());
+	var token = tokensStack.pop();
+	if (rawMatch) {
+		token.inlineAttributes = token.inlineAttributes || [];
+		token.inlineAttributes.push(rawMatch[1].trim());
+	}
+	return applyToken(result, token);
 };
 customRenderer.code = function(code, lang, escaped) {
 	var result = marked.Renderer.prototype.code.call(this, code, lang, escaped);
@@ -188,8 +201,17 @@ customRenderer.list = function(body, ordered) {
 	return applyToken(result, tokensStack.pop());
 };
 customRenderer.listitem = function(text) {
+	var match = listItemIALRegex.exec(text);
+	if (match) {
+		text = text.substring(match[0].length).trim();
+	}
 	var result = marked.Renderer.prototype.listitem.call(this, text);
-	return applyToken(result, tokensStack.pop());
+	var token = tokensStack.pop();
+	if (match) {
+		token.inlineAttributes = token.inlineAttributes || [];
+		token.inlineAttributes.push(match[1].trim());
+	}
+	return applyToken(result, token);
 };
 customRenderer.paragraph = function(text) {
 //	var match = blockAttributeRegex.exec(text);
@@ -246,7 +268,7 @@ customRenderer.table = function(header, body) {
 
 function applyToken(htmlString, token) {
 //	console.log("pop " + token.type + " [" + asdf(tokensStack) + "]");
-	var endsWithNL = /\n$/.test(htmlString);
+	var endsWithNL = /\n$/.test(htmlString) || token.type === "code";
 	var doc = libxmljs.parseXml(htmlString);
 	var root = doc.root();
 	if (token.inlineAttributes) {
@@ -273,7 +295,7 @@ function computeAttributes(inlineAttributes) {
 	 * inherited ones.
 	 */
 	var inheritedAttributes = [];
-	var localAttributes = [];
+	var localAttributes = {};
 
 	inlineAttributes.forEach(function(current) {
 		var segments = current.split(/\s/g);
@@ -281,17 +303,17 @@ function computeAttributes(inlineAttributes) {
 			if (current.length) {
 				var match = idRegex.exec(current);
 				if (match) {
-					localAttributes.push({'id': match[1]});
+					localAttributes.id = match[1];
 				} else {
 					match = classRegex.exec(current);
 					if (match) {
-						localAttributes.push({'class': match[1]});
+						var classes = localAttributes["class"] || "";
+						classes += (classes ? " " : "") + match[1];
+						localAttributes["class"] = classes;
 					} else {
 						match = attributeRegex.exec(current);
 						if (match) {
-							var object = {};
-							object[match[1]] = match[3];
-							localAttributes.push(object);
+							localAttributes[match[1]] = match[3];
 						} else {
 							if (attributeDefinitionLists[current]) {
 								var attributes = computeAttributes([attributeDefinitionLists[current]]);
@@ -313,9 +335,15 @@ function computeAttributes(inlineAttributes) {
 		var key = Object.keys(current)[0];
 		result[key] = current[key];
 	});
-	localAttributes.forEach(function(current) {
-		var key = Object.keys(current)[0];
-		result[key] = current[key];
+	
+	keys = Object.keys(localAttributes);
+	keys.forEach(function(key) {
+		if (key === "class") {
+			/* class is the one attribute that supports multiple values */
+			result[key] = (result[key] || "") + (result[key] ? " " : "")  + localAttributes[key];
+		} else {
+			result[key] = localAttributes[key];
+		}
 	});
 
 	return result;
