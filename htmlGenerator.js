@@ -5,7 +5,8 @@ var attributeDefinitionLists = {};
 
 var inlineAttributeLists = [];
 var blockAttributeRegex = /(^|\n)(([ \t>]*)(\{:(?:\\\}|[^\}])*\})[ \t]*\r?\n)/g;
-var headerIALRegex = /\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
+var spanAttributeRegex = /\{:((?:\\\}|[^\}])*)\}/;
+var headerIALRegex = /[ \t]+\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
 var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
 
 function generate(text, enableExtensions, baseURL) {
@@ -172,13 +173,20 @@ customRenderer.heading = function(text, level, raw) {
 		var rawMatch = headerIALRegex.exec(raw);
 		raw = raw.substring(0, rawMatch.index).trim();
 	}
-	var result = marked.Renderer.prototype.heading.call(this, text, level, raw);
+
+	/* remove all in-line span attributes from raw so that they don't affect the auto-generated element id */
+	raw = raw.replace(new RegExp(spanAttributeRegex.source, "g"), "");
+
+	var htmlString = marked.Renderer.prototype.heading.call(this, text, level, raw);
+	var dom = libxmljs.parseXml(htmlString).root();
+	applySpanAttributes(dom);
+	htmlString = dom.toString();
 	var token = tokensStack.pop();
 	if (rawMatch) {
 		token.inlineAttributes = token.inlineAttributes || [];
 		token.inlineAttributes.push(rawMatch[1].trim());
 	}
-	return applyToken(result, token);
+	return applyToken(htmlString, token);
 };
 customRenderer.code = function(code, lang, escaped) {
 	var result = marked.Renderer.prototype.code.call(this, code, lang, escaped);
@@ -205,26 +213,30 @@ customRenderer.listitem = function(text) {
 	if (match) {
 		text = text.substring(match[0].length).trim();
 	}
-	var result = marked.Renderer.prototype.listitem.call(this, text);
+	var htmlString = marked.Renderer.prototype.listitem.call(this, text);
+	var dom = libxmljs.parseXml(htmlString).root();
+	applySpanAttributes(dom);
+	htmlString = dom.toString();
 	var token = tokensStack.pop();
 	if (match) {
 		token.inlineAttributes = token.inlineAttributes || [];
 		token.inlineAttributes.push(match[1].trim());
 	}
-	return applyToken(result, token);
+	return applyToken(htmlString, token);
 };
 customRenderer.paragraph = function(text) {
-//	var match = blockAttributeRegex.exec(text);
-//	if (match && match[0].length === text.length) {
-//		return "";
-//	}
-	var result = marked.Renderer.prototype.paragraph.call(this, text);
-	return applyToken(result, tokensStack.pop());
-//	return result;
+	var htmlString = marked.Renderer.prototype.paragraph.call(this, text);
+	var dom = libxmljs.parseXml(htmlString).root();
+	applySpanAttributes(dom);
+	htmlString = dom.toString();
+	return applyToken(htmlString, tokensStack.pop());
 };
 customRenderer.table = function(header, body) {
-	var result = marked.Renderer.prototype.table.call(this, header, body);
-	return applyToken(result, tokensStack.pop());
+	var htmlString = marked.Renderer.prototype.table.call(this, header, body);
+	var dom = libxmljs.parseXml(htmlString).root();
+	applySpanAttributes(dom);
+	htmlString = dom.toString();
+	return applyToken(htmlString, tokensStack.pop());
 };
 //customRenderer.tablerow = function(content) {
 //	var result = marked.Renderer.prototype.tablerow.call(this, content);
@@ -258,13 +270,40 @@ customRenderer.table = function(header, body) {
 //	return applyToken(result, tokensStack.pop());
 //};
 //customRenderer.link = function(href, title, text) {
-//	var result = marked.Renderer.prototype.link.call(this, href, title, text);
-//	return applyToken(result, tokensStack.pop());
+//	var htmlString = marked.Renderer.prototype.link.call(this, href, title, text);
+//	var dom = libxmljs.parseXml(htmlString).root();
+//	applySpanAttributes(dom);
+//	return dom.toString();
 //};
 //customRenderer.image = function(href, title, text) {
 //	var result = marked.Renderer.prototype.image.call(this, href, title, text);
 //	return applyToken(result, tokensStack.pop());
 //};
+
+function applySpanAttributes(node) {
+	var childNodes = node.childNodes();
+	for (var i = 0; i < childNodes.length; i++) {
+		var child = childNodes[i];
+		if (child.name() === "text") {
+			var match = spanAttributeRegex.exec(child.text());
+			if (match && !match.index) {
+				var previousSibling = child.prevSibling();
+				if (previousSibling) {
+					child.text(child.text().substring(match[0].length));
+					var attributes = computeAttributes([match[1].trim()]);
+					var keys = Object.keys(attributes);
+					keys.forEach(function(current) {
+						var newAttribute = {};
+						newAttribute[current] = attributes[current];
+						previousSibling.attr(newAttribute);
+					});
+					i--; /* decrement so that the current child will be tried again */
+				}
+			}
+		}
+		applySpanAttributes(child);
+	}
+}
 
 function applyToken(htmlString, token) {
 //	console.log("pop " + token.type + " [" + asdf(tokensStack) + "]");
