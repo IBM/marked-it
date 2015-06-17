@@ -1,8 +1,8 @@
 {
   "name": "mdProcessor",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
-  "description": "reads markdown files from a directory and used the 'marked' module to generate the corresponding .html files",
+  "description": "reads markdown files from a directory and uses the 'marked' module to generate the corresponding .html files",
   "main": "mdProcessor.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,12 +11,9 @@
     "type": "git",
     "url": "https://hub.jazz.net/git/ggayed/markdownProcessor"
   },
-  "keywords": [
-    "markdown",
-    "marked",
-    "html"
-  ],
+  "keywords": ["markdown", "marked", "html"],
   "dependencies": {"marked": "0.3.2", "libxmljs": "0.14.0"},
+  "devDependencies": {"mocha": "2.2.5"},
   "author": "Grant Gayed",
   "license": "Eclipse Public License v1.0"
 }
