@@ -328,13 +328,8 @@ function computeAttributes(inlineAttributes) {
 	var classRegex = /\.(-?[_a-zA-Z]+[_a-zA-Z0-9-]*)/;
 	var attributeRegex = /([^\/>"'=]+)=(['"])([^\2]+)\2/;
 
-	/*
-	 * Determine all attributes first, then build the result object from them by applying
-	 * all inherited attributes first, so that locally-defined attributes will override
-	 * inherited ones.
-	 */
-	var inheritedAttributes = [];
-	var localAttributes = {};
+	var inheritedAttributes = {}; /* from ADLs */
+	var localAttributes = {}; /* from IALs */
 
 	inlineAttributes.forEach(function(current) {
 		var segments = current.split(/\s/g);
@@ -358,9 +353,12 @@ function computeAttributes(inlineAttributes) {
 								var attributes = computeAttributes([attributeDefinitionLists[current]]);
 								var keys = Object.keys(attributes);
 								keys.forEach(function(key) {
-									object = {};
-									object[key] = attributes[key];
-									inheritedAttributes.push(object);
+									if (key === "class" && inheritedAttributes[key]) {
+										/* merge conflicting class values rather than overwriting */
+										inheritedAttributes[key] += " " + attributes[key];
+									} else {
+										inheritedAttributes[key] = attributes[key];
+									}
 								});
 							}
 						}
@@ -370,15 +368,17 @@ function computeAttributes(inlineAttributes) {
 		});
 	});
 
-	inheritedAttributes.forEach(function(current) {
-		var key = Object.keys(current)[0];
-		result[key] = current[key];
+	/* add inherited attributes first so that locally-defined attributes will overwrite inherited ones when a name conflict occurs */
+
+	keys = Object.keys(inheritedAttributes);
+	keys.forEach(function(key) {
+		result[key] = inheritedAttributes[key];
 	});
-	
+
 	keys = Object.keys(localAttributes);
 	keys.forEach(function(key) {
 		if (key === "class") {
-			/* class is the one attribute that supports multiple values */
+			/* merge conflicting class values rather than overwriting */
 			result[key] = (result[key] || "") + (result[key] ? " " : "")  + localAttributes[key];
 		} else {
 			result[key] = localAttributes[key];
@@ -389,7 +389,6 @@ function computeAttributes(inlineAttributes) {
 }
 
 markedOptions.renderer = customRenderer;
-//var lexer = new marked.Lexer(markedOptions);
 var parser = new marked.Parser(markedOptions);
 
 var tokensStack = [];

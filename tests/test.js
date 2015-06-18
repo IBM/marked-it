@@ -20,10 +20,9 @@ describe('markdownProcessor tests', function() {
     	if (OUTPUT_GENERATED_HTML) {
     		console.log("-------------------------------\n" + resultText);
     	} else {
-        	fd = fs.openSync('./result_ADL.html', "r");
+        	fd = fs.openSync('./expectedResult_ADL.html', "r");
         	var expectedText = readFile(fd);
         	fs.close(fd);
-        	console.log("lengths: " + resultText.length + "..." + expectedText.length);
     		assert.strictEqual(resultText, expectedText);
     	}
     });
@@ -37,7 +36,7 @@ describe('markdownProcessor tests', function() {
 //    	if (OUTPUT_GENERATED_HTML) {
 //    		console.log("-------------------------------\n" + resultText);
 //    	} else {
-//			fd = fs.openSync('./result_block_IAL.html', "r");
+//			fd = fs.openSync('./expectedResult_block_IAL.html', "r");
 //			var expectedText = readFile(fd);
 //			fs.close(fd);
 //    		assert.strictEqual(resultText, expectedText);
@@ -53,7 +52,7 @@ describe('markdownProcessor tests', function() {
 //    	if (OUTPUT_GENERATED_HTML) {
 //    		console.log("-------------------------------\n" + resultText);
 //    	} else {
-//			fd = fs.openSync('./result_span_IAL.html', "r");
+//			fd = fs.openSync('./expectedResult_span_IAL.html', "r");
 //			var expectedText = readFile(fd);
 //			fs.close(fd);
 //    		assert.strictEqual(resultText, expectedText);
