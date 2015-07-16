@@ -22,9 +22,11 @@ var SWITCH_OVERWRITE = "-overwrite";
 var SWITCH_EXTENSIONS = "-disableExtensions";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
+var SWITCH_CONREFFILE = "--conrefFile";
 var COPY_EXTENSIONS = [EXTENSION_HTML, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg"];
 
 var sourceDir, destinationDir, baseURL, overwrite, disableExtensions, headerFile, footerFile, headerText, footerText;
+var conrefFile, conrefMap;
 
 var switchCounter = 0;
 process.argv.forEach(function(arg) {
@@ -43,6 +45,8 @@ process.argv.forEach(function(arg) {
 		headerFile = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_FOOTERFILE) === 0 && arg.indexOf("=") !== -1) {
 		footerFile = arg.substring(arg.indexOf("=") + 1);
+	} else if (arg.indexOf(SWITCH_CONREFFILE) === 0 && arg.indexOf("=") !== -1) {
+		conrefFile = arg.substring(arg.indexOf("=") + 1);
 	} else {
 		/* don't display errors for the first two args (the node executable and .js file) */
 		if (switchCounter > 2) {
@@ -82,6 +86,11 @@ if (footerFile) {
 	fs.close(fd);
 }
 
+if (conrefFile) {
+	var read = require("read-yaml");
+	conrefMap = read.sync(conrefFile);
+}
+
 var writeStat = fs.statSync(destinationDir);
 var writeBlockSize = writeStat.blksize || 4096;
 
@@ -111,6 +120,9 @@ function traverse_tree(source, destination) {
 							if (!fileText) {
 								console.log("*** Failed to read " + sourcePath);
 							} else {
+								if (conrefMap) {
+									fileText = replaceVariables(fileText);
+								}
 								var markdownText = htmlGenerator.generate(fileText, !disableExtensions, baseURL);
 								if (!markdownText) {
 									console.log("*** Failed during conversion of markdown to HTML file " + sourcePath);
@@ -201,4 +213,46 @@ function writeFile(fd, buffer) {
 		totalWriteCount += writeCount;
 	} while (totalWriteCount < buffer.length);
 	return true;
+}
+
+function replaceVariables(text) { /* conref support */
+	var textLen = text.length;
+	var pos = text.indexOf('{{'), stop = 0;
+	var key, value, res = '';
+	while (pos >= 0) {
+		res += text.substring(stop, pos);
+
+		stop = text.indexOf('}}', pos + 2);
+		if (stop < 0) { // hit EOF
+			res += text.substring(pos);
+			break;
+		}
+
+		if (stop > pos) { // found
+			key = text.substring(pos + 2, stop).trim();
+			if (key.indexOf('site.data.') === 0) {
+				key = key.substring('site.data.'.length);
+				value = key.split('.').reduce(
+					function get(result, currentKey) {
+						return result[currentKey];
+					},
+					conrefMap);
+				if (value) {
+					res += value;
+					stop += 2;
+					pos = text.indexOf('{{', stop);
+					continue;
+				}
+			}
+		}
+
+		res += text.substring(pos, stop + 2);
+		stop += 2;
+		pos = text.indexOf('{{', stop);
+	}
+	if (stop >= 0 && stop < textLen) {
+		res += text.substring(stop);
+	}
+
+	return res;
 }
