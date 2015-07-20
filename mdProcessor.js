@@ -8,9 +8,9 @@
  * Contributors: IBM Corporation - initial API and implementation
  ******************************************************************************/
 
-var fs = require('fs');
-var path = require('path');
-var htmlGenerator = require('./htmlGenerator');
+var fs = require("fs");
+var path = require("path");
+var htmlGenerator = require("./htmlGenerator");
 
 var EXTENSION_HTML = ".html";
 var EXTENSION_MARKDOWN = ".md";
@@ -40,7 +40,7 @@ process.argv.forEach(function(arg) {
 	} else if (arg.indexOf(SWITCH_OVERWRITE) === 0) {
 		overwrite = true;
 	} else if (arg.indexOf(SWITCH_EXTENSIONS) === 0) {
-		enableAttributes = true;
+		disableExtensions = true;
 	} else if (arg.indexOf(SWITCH_HEADERFILE) === 0 && arg.indexOf("=") !== -1) {
 		headerFile = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_FOOTERFILE) === 0 && arg.indexOf("=") !== -1) {
@@ -215,44 +215,52 @@ function writeFile(fd, buffer) {
 	return true;
 }
 
-function replaceVariables(text) { /* conref support */
-	var textLen = text.length;
-	var pos = text.indexOf('{{'), stop = 0;
-	var key, value, res = '';
-	while (pos >= 0) {
-		res += text.substring(stop, pos);
+function replaceVariables(text) { /* conref variables */
+	var VAR_OPEN = "{{";
+	var VAR_CLOSE = "}}";
+	var SITEDATA = "site.data.";
+	
+	var result = "";
+	var pos = 0;
 
-		stop = text.indexOf('}}', pos + 2);
-		if (stop < 0) { // hit EOF
-			res += text.substring(pos);
+	var index = text.indexOf(VAR_OPEN);	
+	while (index !== -1) {
+		result += text.substring(pos, index);
+		pos = index;
+
+		var endIndex = text.indexOf(VAR_CLOSE, index + VAR_OPEN.length);
+		if (endIndex === -1) {
+			result += text.substring(pos);
+			pos = text.length;
 			break;
 		}
 
-		if (stop > pos) { // found
-			key = text.substring(pos + 2, stop).trim();
-			if (key.indexOf('site.data.') === 0) {
-				key = key.substring('site.data.'.length);
-				value = key.split('.').reduce(
-					function get(result, currentKey) {
-						return result[currentKey];
-					},
-					conrefMap);
-				if (value) {
-					res += value;
-					stop += 2;
-					pos = text.indexOf('{{', stop);
-					continue;
-				}
-			}
+		var key = text.substring(index + VAR_OPEN.length, endIndex).trim();
+		var value = "";
+		if (key.indexOf(SITEDATA) === 0) {
+			key = key.substring(SITEDATA.length);
+			value = key.split(".").reduce(
+				function get(result, currentKey) {
+					return result[currentKey];
+				},
+				conrefMap);
 		}
-
-		res += text.substring(pos, stop + 2);
-		stop += 2;
-		pos = text.indexOf('{{', stop);
+		if (value) {
+			/*
+			 * If a value was found then substitute it in-place in text rather than putting it right
+			 * into result, in order to support variables that resolve to other variables.
+			 */
+			text = value + text.substring(endIndex + VAR_CLOSE.length);
+			pos = 0;
+			index = 0;
+		} else {
+			/*
+			 * A value was not found, just treat it as plaintext that will be appended to result later.
+			 */
+			index = endIndex + VAR_CLOSE.length;
+		}
+		index = text.indexOf(VAR_OPEN, index);
 	}
-	if (stop >= 0 && stop < textLen) {
-		res += text.substring(stop);
-	}
-
-	return res;
+	result += text.substring(pos);
+	return result;
 }
