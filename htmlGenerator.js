@@ -2,14 +2,19 @@ var libxmljs = require('libxmljs');
 var marked = require('marked');
 
 var attributeDefinitionLists = {};
-
 var inlineAttributeLists = [];
+var tokensStack = [];
+
 var blockAttributeRegex = /(^|\n)(([ \t>]*)(\{:(?:\\\}|[^\}])*\})[ \t]*\r?\n)/g;
 var spanAttributeRegex = /\{:((?:\\\}|[^\}])*)\}/;
 var headerIALRegex = /[ \t]+\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
 var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
 
 function generate(text, enableExtensions, baseURL) {
+	attributeDefinitionLists = {};
+	inlineAttributeLists = [];
+	tokensStack = [];
+	
 	if (baseURL) {
 		marked.InlineLexer.prototype.outputLink = baseURL;
 	}
@@ -395,7 +400,6 @@ function computeAttributes(inlineAttributes) {
 markedOptions.renderer = customRenderer;
 var parser = new marked.Parser(markedOptions);
 
-var tokensStack = [];
 var originalTok = marked.Parser.prototype.tok.bind(parser);
 marked.Parser.prototype.tok = function() {
 	if (this.token.type !== "space") {
