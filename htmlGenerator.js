@@ -50,7 +50,11 @@ function generate(text, enableExtensions, baseURL) {
 		var checkNextLine = true;
 		if (current.lineStart) {
 			/* not on the first line */
-			var previousLineStart = getLineStart(text, current.lineStart - 1); /* backtrack to start of previous line */
+			var previousLineEnd = current.lineStart - 1;
+			if (previousLineEnd > 0 && text.charAt(previousLineEnd - 1) === _CR) {
+				previousLineEnd--;
+			}
+			var previousLineStart = getLineStart(text, previousLineEnd); /* backtrack to start of previous line */
 			var previousLine = text.substring(previousLineStart, current.lineStart - 1);
 			if (!previousLine.indexOf(current.match[3]) && /\S+/.test(previousLine.substring(current.match[3].length))) {
 				/* the previous line is not "blank" (excluding indentation characters), move the index back into the previous line's block */
