@@ -174,6 +174,16 @@ function findBlock(parentBlock, offset) {
 
 var markedOptions = {tables: true, gfm: true, headerPrefix: "", xhtml: true};
 
+function htmlToDom(string) {
+	string = string.replace(/&/g, "&amp;");
+	return libxmljs.parseXml(string).root();
+}
+
+function domToHtml(dom) {
+	var string = dom.toString();
+	return string.replace(/&amp;/g, "&");
+}
+
 var customRenderer = new marked.Renderer();
 customRenderer.heading = function(text, level, raw) {
 	var textMatch = headerIALRegex.exec(text);
@@ -187,9 +197,9 @@ customRenderer.heading = function(text, level, raw) {
 	raw = raw.replace(new RegExp(spanAttributeRegex.source, "g"), "");
 
 	var htmlString = marked.Renderer.prototype.heading.call(this, text, level, raw);
-	var dom = libxmljs.parseXml(htmlString).root();
+	var dom = htmlToDom(htmlString);
 	applySpanAttributes(dom);
-	htmlString = dom.toString();
+	htmlString = domToHtml(dom);
 	var token = tokensStack.pop();
 	if (rawMatch) {
 		token.inlineAttributes = token.inlineAttributes || [];
@@ -223,9 +233,9 @@ customRenderer.listitem = function(text) {
 		text = text.substring(match[0].length).trim();
 	}
 	var htmlString = marked.Renderer.prototype.listitem.call(this, text);
-	var dom = libxmljs.parseXml(htmlString).root();
+	var dom = htmlToDom(htmlString);
 	applySpanAttributes(dom);
-	htmlString = dom.toString();
+	htmlString = domToHtml(dom);
 	var token = tokensStack.pop();
 	if (match) {
 		token.inlineAttributes = token.inlineAttributes || [];
@@ -235,16 +245,16 @@ customRenderer.listitem = function(text) {
 };
 customRenderer.paragraph = function(text) {
 	var htmlString = marked.Renderer.prototype.paragraph.call(this, text);
-	var dom = libxmljs.parseXml(htmlString).root();
+	var dom = htmlToDom(htmlString);
 	applySpanAttributes(dom);
-	htmlString = dom.toString();
+	htmlString = domToHtml(dom);
 	return applyToken(htmlString, tokensStack.pop());
 };
 customRenderer.table = function(header, body) {
 	var htmlString = marked.Renderer.prototype.table.call(this, header, body);
-	var dom = libxmljs.parseXml(htmlString).root();
+	var dom = htmlToDom(htmlString);
 	applySpanAttributes(dom);
-	htmlString = dom.toString();
+	htmlString = domToHtml(dom);
 	return applyToken(htmlString, tokensStack.pop());
 };
 //customRenderer.tablerow = function(content) {
@@ -280,9 +290,9 @@ customRenderer.table = function(header, body) {
 //};
 //customRenderer.link = function(href, title, text) {
 //	var htmlString = marked.Renderer.prototype.link.call(this, href, title, text);
-//	var dom = libxmljs.parseXml(htmlString).root();
+//	var dom = htmlToDom(htmlString);
 //	applySpanAttributes(dom);
-//	return dom.toString();
+//	return domToHtml(dom);
 //};
 //customRenderer.image = function(href, title, text) {
 //	var result = marked.Renderer.prototype.image.call(this, href, title, text);
@@ -317,8 +327,7 @@ function applySpanAttributes(node) {
 function applyToken(htmlString, token) {
 //	console.log("pop " + token.type + " [" + asdf(tokensStack) + "]");
 	var endsWithNL = /\n$/.test(htmlString) || token.type === "code";
-	var doc = libxmljs.parseXml(htmlString);
-	var root = doc.root();
+	var root = htmlToDom(htmlString);
 	if (token.inlineAttributes) {
 		var attributes = computeAttributes(token.inlineAttributes);
 		var keys = Object.keys(attributes);
@@ -328,7 +337,7 @@ function applyToken(htmlString, token) {
 			root.attr(newAttribute);
 		});
 	}
-	return root.toString() + (endsWithNL ? "\n" : "");
+	return domToHtml(root) + (endsWithNL ? "\n" : "");
 }
 
 function computeAttributes(inlineAttributes) {
