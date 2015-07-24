@@ -4,16 +4,18 @@ var marked = require('marked');
 var attributeDefinitionLists = {};
 var inlineAttributeLists = [];
 var tokensStack = [];
+var tocBuilder;
 
 var blockAttributeRegex = /(^|\n)(([ \t>]*)(\{:(?:\\\}|[^\}])*\})[ \t]*\r?\n)/g;
 var spanAttributeRegex = /\{:((?:\\\}|[^\}])*)\}/;
 var headerIALRegex = /[ \t]+\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
 var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
 
-function generate(text, enableExtensions, baseURL) {
+function generate(text, toc_builder, enableExtensions, baseURL) {
 	attributeDefinitionLists = {};
 	inlineAttributeLists = [];
 	tokensStack = [];
+	tocBuilder = toc_builder;
 	
 	if (baseURL) {
 		marked.InlineLexer.prototype.outputLink = baseURL;
@@ -186,6 +188,7 @@ function domToHtml(dom) {
 
 var customRenderer = new marked.Renderer();
 customRenderer.heading = function(text, level, raw) {
+	tocBuilder.heading(text, level, raw);
 	var textMatch = headerIALRegex.exec(text);
 	if (textMatch) {
 		text = text.substring(0, textMatch.index).trim();
@@ -244,6 +247,7 @@ customRenderer.listitem = function(text) {
 	return applyToken(htmlString, token);
 };
 customRenderer.paragraph = function(text) {
+	tocBuilder.paragraph(text);
 	var htmlString = marked.Renderer.prototype.paragraph.call(this, text);
 	var dom = htmlToDom(htmlString);
 	applySpanAttributes(dom);
@@ -288,12 +292,14 @@ customRenderer.table = function(header, body) {
 //	var result = marked.Renderer.prototype.del.call(this, text);
 //	return applyToken(result, tokensStack.pop());
 //};
-//customRenderer.link = function(href, title, text) {
-//	var htmlString = marked.Renderer.prototype.link.call(this, href, title, text);
+customRenderer.link = function(href, title, text) {
+	tocBuilder.link(href, title, text);
+	var htmlString = marked.Renderer.prototype.link.call(this, href, title, text);
 //	var dom = htmlToDom(htmlString);
 //	applySpanAttributes(dom);
 //	return domToHtml(dom);
-//};
+	return htmlString;
+};
 //customRenderer.image = function(href, title, text) {
 //	var result = marked.Renderer.prototype.image.call(this, href, title, text);
 //	return applyToken(result, tokensStack.pop());
@@ -345,30 +351,32 @@ function computeAttributes(inlineAttributes) {
 	var idRegex = /#([\S]+)/;
 	var classRegex = /\.(-?[_a-zA-Z]+[_a-zA-Z0-9-]*)/;
 	var attributeRegex = /([^\/>"'=]+)=(['"])([^\2]+)\2/;
+	var segmentRegex = /([^ \t'"]|((['"])[^\3]*\3))+/g;
 
 	var inheritedAttributes = {}; /* from ADLs */
 	var localAttributes = {}; /* from IALs */
 
 	inlineAttributes.forEach(function(current) {
-		var segments = current.split(/\s/g);
-		segments.forEach(function(current) {
-			if (current.length) {
-				var match = idRegex.exec(current);
+		var segmentMatch = segmentRegex.exec(current);
+		while (segmentMatch) {
+			segmentMatch = segmentMatch[0];
+			if (segmentMatch.length) {
+				var match = idRegex.exec(segmentMatch);
 				if (match) {
 					localAttributes.id = match[1];
 				} else {
-					match = classRegex.exec(current);
+					match = classRegex.exec(segmentMatch);
 					if (match) {
 						var classes = localAttributes["class"] || "";
 						classes += (classes ? " " : "") + match[1];
 						localAttributes["class"] = classes;
 					} else {
-						match = attributeRegex.exec(current);
+						match = attributeRegex.exec(segmentMatch);
 						if (match) {
 							localAttributes[match[1]] = match[3];
 						} else {
-							if (attributeDefinitionLists[current]) {
-								var attributes = computeAttributes([attributeDefinitionLists[current]]);
+							if (attributeDefinitionLists[segmentMatch]) {
+								var attributes = computeAttributes([attributeDefinitionLists[segmentMatch]]);
 								var keys = Object.keys(attributes);
 								keys.forEach(function(key) {
 									if (key === "class" && inheritedAttributes[key]) {
@@ -383,7 +391,8 @@ function computeAttributes(inlineAttributes) {
 					}
 				}
 			}
-		});
+			segmentMatch = segmentRegex.exec(current);
+		}
 	});
 
 	/* add inherited attributes first so that locally-defined attributes will overwrite inherited ones when a name conflict occurs */

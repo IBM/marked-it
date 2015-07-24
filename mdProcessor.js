@@ -11,7 +11,9 @@
 var fs = require("fs");
 var path = require("path");
 var htmlGenerator = require("./htmlGenerator");
+var tocBuilder = require('./tocBuilder');
 
+var EXTENSION_DITAMAP = ".ditamap";
 var EXTENSION_HTML = ".html";
 var EXTENSION_MARKDOWN = ".md";
 var EXTENSION_MARKDOWN_REGEX = /\.md$/gi;
@@ -20,12 +22,13 @@ var SWITCH_DESTDIR = "--destDir";
 var SWITCH_BASEURL = "--baseURL";
 var SWITCH_OVERWRITE = "-overwrite";
 var SWITCH_EXTENSIONS = "-disableExtensions";
+var SWITCH_TOC = "-disableTOC";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
 var SWITCH_CONREFFILE = "--conrefFile";
 var COPY_EXTENSIONS = [EXTENSION_HTML, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg"];
 
-var sourceDir, destinationDir, baseURL, overwrite, disableExtensions, headerFile, footerFile, headerText, footerText;
+var sourceDir, destinationDir, baseURL, overwrite, disableExtensions, disableTOC, headerFile, footerFile, headerText, footerText;
 var conrefFile, conrefMap;
 
 var switchCounter = 0;
@@ -41,6 +44,8 @@ process.argv.forEach(function(arg) {
 		overwrite = true;
 	} else if (arg.indexOf(SWITCH_EXTENSIONS) === 0) {
 		disableExtensions = true;
+	} else if (arg.indexOf(SWITCH_TOC) === 0) {
+		disableTOC = true;
 	} else if (arg.indexOf(SWITCH_HEADERFILE) === 0 && arg.indexOf("=") !== -1) {
 		headerFile = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_FOOTERFILE) === 0 && arg.indexOf("=") !== -1) {
@@ -56,7 +61,7 @@ process.argv.forEach(function(arg) {
 });
 
 if (!sourceDir || !destinationDir) {
-	console.log("\nUsage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + "\n\t\t" + SWITCH_OVERWRITE + "\n\t\t" + SWITCH_EXTENSIONS + "\n\t\t" + SWITCH_HEADERFILE + "=<headerSourceFile>" + "\n\t\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>" + "\n\t]");
+	console.log("\nUsage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + "\n\t\t" + SWITCH_OVERWRITE + "\n\t\t" + SWITCH_EXTENSIONS + "\n\t\t" + SWITCH_TOC + "\n\t\t" + SWITCH_HEADERFILE + "=<headerSourceFile>" + "\n\t\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>" + "\n\t]");
 	process.exit();
 }
 
@@ -123,14 +128,15 @@ function traverse_tree(source, destination) {
 								if (conrefMap) {
 									fileText = replaceVariables(fileText);
 								}
-								var markdownText = htmlGenerator.generate(fileText, !disableExtensions, baseURL);
+								tocBuilder.reset();
+								var markdownText = htmlGenerator.generate(fileText, tocBuilder, !disableExtensions, baseURL);
 								if (!markdownText) {
 									console.log("*** Failed during conversion of markdown to HTML file " + sourcePath);
 								} else {
 									var outBuffer = new Buffer(markdownText);
 									fs.open(destinationPath, overwrite ? "w" : "wx", null, function(writeErr, writeFd) {
 										if (writeErr) {
-											console.log("*** Failed to open file to write: " + sourcePath + "\n" + writeErr.toString());
+											console.log("*** Failed to open file to write: " + destinationPath + "\n" + writeErr.toString());
 										} else {
 											var success = true;
 											if (headerText) {
@@ -144,6 +150,23 @@ function traverse_tree(source, destination) {
 											}
 											if (success) {
 												console.log("--> Wrote: " + destinationPath);
+
+												var tocStr = tocBuilder.buffer();
+												if (!disableTOC && tocStr) {
+													var tocFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_DITAMAP));
+													fs.open(tocFilename, overwrite ? 'w' : 'wx', null, function(writeErr, writeFd) {
+														if (writeErr) {
+															console.log('*** Failed to open file to write: ' + tocFilename + '\n' + writeErr);
+														} else {
+															if (writeFile(writeFd, new Buffer(tocStr))) {
+																console.log('--> Wrote: ' + tocFilename);
+															} else {
+																console.log('*** Failed to write: ' + tocFilename);
+															}
+															fs.close(writeFd);
+														}
+													});
+												}
 											} else {
 												console.log("*** Failed to write: " + destinationPath);
 											}
