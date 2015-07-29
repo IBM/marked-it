@@ -21,14 +21,14 @@ var SWITCH_SOURCEDIR = "--sourceDir";
 var SWITCH_DESTDIR = "--destDir";
 var SWITCH_BASEURL = "--baseURL";
 var SWITCH_OVERWRITE = "-overwrite";
-var SWITCH_EXTENSIONS = "-disableExtensions";
+var SWITCH_ATTRIBUTES = "-disableAttributes";
 var SWITCH_TOC = "-disableTOC";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
 var SWITCH_CONREFFILE = "--conrefFile";
 var COPY_EXTENSIONS = [EXTENSION_HTML, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg"];
 
-var sourceDir, destinationDir, baseURL, overwrite, disableExtensions, disableTOC, headerFile, footerFile, headerText, footerText;
+var sourceDir, destinationDir, baseURL, overwrite, disableAttributes, disableTOC, headerFile, footerFile, headerText, footerText;
 var conrefFile, conrefMap;
 
 var switchCounter = 0;
@@ -42,8 +42,8 @@ process.argv.forEach(function(arg) {
 //		baseURL = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_OVERWRITE) === 0) {
 		overwrite = true;
-	} else if (arg.indexOf(SWITCH_EXTENSIONS) === 0) {
-		disableExtensions = true;
+	} else if (arg.indexOf(SWITCH_ATTRIBUTES) === 0) {
+		disableAttributes = true;
 	} else if (arg.indexOf(SWITCH_TOC) === 0) {
 		disableTOC = true;
 	} else if (arg.indexOf(SWITCH_HEADERFILE) === 0 && arg.indexOf("=") !== -1) {
@@ -61,7 +61,7 @@ process.argv.forEach(function(arg) {
 });
 
 if (!sourceDir || !destinationDir) {
-	console.log("\nUsage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + "\n\t\t" + SWITCH_OVERWRITE + "\n\t\t" + SWITCH_EXTENSIONS + "\n\t\t" + SWITCH_TOC + "\n\t\t" + SWITCH_HEADERFILE + "=<headerSourceFile>" + "\n\t\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>" + "\n\t]");
+	console.log("\nUsage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + "\n\t\t" + SWITCH_OVERWRITE + "\n\t\t" + SWITCH_ATTRIBUTES + "\n\t\t" + SWITCH_TOC + "\n\t\t" + SWITCH_HEADERFILE + "=<headerSourceFile>" + "\n\t\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>" + "\n\t]");
 	process.exit();
 }
 
@@ -129,7 +129,7 @@ function traverse_tree(source, destination) {
 									fileText = replaceVariables(fileText);
 								}
 								tocBuilder.reset();
-								var markdownText = htmlGenerator.generate(fileText, tocBuilder, !disableExtensions, baseURL);
+								var markdownText = htmlGenerator.generate(fileText, tocBuilder, !disableAttributes, baseURL);
 								if (!markdownText) {
 									console.log("*** Failed during conversion of markdown to HTML file " + sourcePath);
 								} else {

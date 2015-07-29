@@ -11,7 +11,7 @@ var spanAttributeRegex = /\{:((?:\\\}|[^\}])*)\}/;
 var headerIALRegex = /[ \t]+\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
 var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
 
-function generate(text, toc_builder, enableExtensions, baseURL) {
+function generate(text, toc_builder, enableAttributes, baseURL) {
 	attributeDefinitionLists = {};
 	inlineAttributeLists = [];
 	tokensStack = [];
@@ -21,7 +21,7 @@ function generate(text, toc_builder, enableExtensions, baseURL) {
 		marked.InlineLexer.prototype.outputLink = baseURL;
 	}
 
-	if (enableExtensions) {
+	if (enableAttributes) {
 		var attributeLists = [];
 		var match = blockAttributeRegex.exec(text);
 		while (match) {
