@@ -11,11 +11,14 @@
 var fs = require("fs");
 var path = require("path");
 var htmlGenerator = require("./htmlGenerator");
-var tocBuilder = require('./tocBuilder');
+var mdTOCGenerator = require("./mdTOCGenerator");
+var ditamapGenerator = require("./ditamapGenerator");
 
 var EXTENSION_DITAMAP = ".ditamap";
 var EXTENSION_HTML = ".html";
+var EXTENSION_HTML_TOC = "TOC.html";
 var EXTENSION_MARKDOWN = ".md";
+var EXTENSION_MARKDOWN_TOC = "TOC.md";
 var EXTENSION_MARKDOWN_REGEX = /\.md$/gi;
 var SWITCH_SOURCEDIR = "--sourceDir";
 var SWITCH_DESTDIR = "--destDir";
@@ -101,102 +104,170 @@ var writeBlockSize = writeStat.blksize || 4096;
 
 function traverse_tree(source, destination) {
 	var filenames = fs.readdirSync(source);
-	filenames.forEach(function(current) {
+	for (var i = 0; i < filenames.length; i++) {
+		var current = filenames[i];
 		var sourcePath = path.join(source, current);
-		fs.stat(sourcePath, function(err, stat) {
-			if (stat && stat.isDirectory()) {
-				var destPath = path.join(destination, current);
-				fs.stat(destPath, function (err, stat) {
-					if (!stat) {
-						fs.mkdir(destPath, function (err) {});
-					}
-				});
-				traverse_tree(sourcePath, destPath);
-			} else {
-				var outputFilename = current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML);
-				var destinationPath = path.join(destination, outputFilename);
-				var extension = path.extname(current).toLowerCase();
-				if (extension === EXTENSION_MARKDOWN) {
-					fs.open(sourcePath, "r", null, function(readErr, readFd) {
-						if (readErr) {
-							console.log("*** Failed to open file to read: " + sourcePath + "\n" + readErr.toString());
-						} else {
-							var fileText = readFile(readFd);
-							if (!fileText) {
-								console.log("*** Failed to read " + sourcePath);
-							} else {
-								if (conrefMap) {
-									fileText = replaceVariables(fileText);
-								}
-								tocBuilder.reset();
-								var markdownText = htmlGenerator.generate(fileText, tocBuilder, !disableAttributes, baseURL);
-								if (!markdownText) {
-									console.log("*** Failed during conversion of markdown to HTML file " + sourcePath);
-								} else {
-									var outBuffer = new Buffer(markdownText);
-									fs.open(destinationPath, overwrite ? "w" : "wx", null, function(writeErr, writeFd) {
-										if (writeErr) {
-											console.log("*** Failed to open file to write: " + destinationPath + "\n" + writeErr.toString());
-										} else {
-											var success = true;
-											if (headerText) {
-												success = writeFile(writeFd, new Buffer(headerText));
-											}
-											if (success) {
-												success = writeFile(writeFd, outBuffer);
-											}
-											if (success && footerText) {
-												success = writeFile(writeFd, new Buffer(footerText));
-											}
-											if (success) {
-												console.log("--> Wrote: " + destinationPath);
+		try {
+			var stat = fs.statSync(sourcePath);
+		} catch (e) {
+			console.log("*** Failed to stat: " + sourcePath + "\n" + e.toString());
+			continue;
+		}
+		
+		if (stat.isDirectory()) {
+			var destPath = path.join(destination, current);
+			try {
+				var dirStat = fs.statSync(destPath);
+			} catch (e) {
+				fs.mkdir(destPath, function (err) {});
+			}
+			traverse_tree(sourcePath, destPath);
+		} else {
+			var outputFilename = current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML);
+			var destinationPath = path.join(destination, outputFilename);
+			var extension = path.extname(current).toLowerCase();
+			if (extension === EXTENSION_MARKDOWN) {
+				try {
+					var readFd = fs.openSync(sourcePath, "r");
+				} catch (e) {
+					console.log("*** Failed to open file to read: " + sourcePath + "\n" + e.toString());
+					continue;
+				}
+				
+				var fileText = readFile(readFd);
+				fs.close(readFd);
+				if (!fileText) {
+					console.log("*** Failed to read " + sourcePath);
+					continue;
+				}
 
-												var tocStr = tocBuilder.buffer();
-												if (!disableTOC && tocStr) {
-													var tocFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_DITAMAP));
-													fs.open(tocFilename, overwrite ? 'w' : 'wx', null, function(writeErr, writeFd) {
-														if (writeErr) {
-															console.log('*** Failed to open file to write: ' + tocFilename + '\n' + writeErr);
-														} else {
-															if (writeFile(writeFd, new Buffer(tocStr))) {
-																console.log('--> Wrote: ' + tocFilename);
-															} else {
-																console.log('*** Failed to write: ' + tocFilename);
-															}
-															fs.close(writeFd);
-														}
-													});
-												}
-											} else {
-												console.log("*** Failed to write: " + destinationPath);
-											}
-											fs.close(writeFd);
-										}
-									});
-								}
-							}
-							fs.close(readFd);
-						}
-					});
-				} else if (COPY_EXTENSIONS.indexOf(extension) !== -1) {
-					var readStream = fs.createReadStream(sourcePath);
+				if (conrefMap) {
+					fileText = replaceVariables(fileText);
+				}
+				mdTOCGenerator.reset(outputFilename);
+				var markdownText = htmlGenerator.generate(fileText, !disableAttributes, baseURL, disableTOC ? null : mdTOCGenerator);
+				if (!markdownText) {
+					console.log("*** Failed during conversion of markdown to HTML file " + sourcePath);
+					continue;
+				}
+
+				var outBuffer = new Buffer(markdownText);
+				try {
+					var writeHTMLFd = fs.openSync(destinationPath, overwrite ? "w" : "wx");
+				} catch (e) {
+					console.log("*** Failed to open file to write: " + destinationPath + "\n" + e.toString());
+					continue;
+				}
+				
+				var success = true;
+				if (headerText) {
+					success = writeFile(writeHTMLFd, new Buffer(headerText));
+				}
+				if (success) {
+					success = writeFile(writeHTMLFd, outBuffer);
+				}
+				if (success && footerText) {
+					success = writeFile(writeHTMLFd, new Buffer(footerText));
+				}
+				fs.close(writeHTMLFd);
+				if (!success) {
+					console.log("*** Failed to write: " + destinationPath);
+					continue;
+				}
+				
+				console.log("--> Wrote: " + destinationPath);
+
+				if (disableTOC) {
+					continue;
+				}
+				
+				var mdTOC = mdTOCGenerator.buffer();
+				if (!mdTOC) {
+					continue;
+				}
+				
+				var tocFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_MARKDOWN_TOC));
+				try {
+					var writeTOCFd = fs.openSync(tocFilename, overwrite ? "w" : "wx");
+				} catch (e) {
+					console.log("*** Failed to open file to write: " + tocFilename + "\n" + e.toString());
+					continue;
+				}
+				
+				var success = writeFile(writeTOCFd, new Buffer(mdTOC));
+				fs.close(writeTOCFd);
+				if (!success) {
+					console.log("*** Failed to write: " + tocFilename);
+					continue;
+				}
+				
+				console.log("--> Wrote: " + tocFilename);
+				ditamapGenerator.reset();
+				var htmlTOC = htmlGenerator.generate(mdTOC, !disableAttributes, baseURL, ditamapGenerator);
+				if (!htmlTOC) {
+					console.log("*** Failed during conversion of markdown TOC to ditamap file " + tocFilename);
+					continue;
+				}
+
+				var ditamap = ditamapGenerator.buffer();
+				if (!ditamap) {
+					continue;
+				}
+
+				var ditamapFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_DITAMAP));
+				try {
+					var writeDitamapFd = fs.openSync(ditamapFilename, overwrite ? "w" : "wx");
+				} catch (e) {
+					console.log("*** Failed to open file to write: " + ditamapFilename + "\n" + e.toString());
+					continue;
+				}
+
+				success = writeFile(writeDitamapFd, new Buffer(ditamap));
+				fs.close(writeDitamapFd);
+				if (!success) {
+					console.log("*** Failed to write: " + ditamapFilename);					
+				}
+				
+				console.log("--> Wrote: " + ditamapFilename);
+				var htmlTOCFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML_TOC));
+				try {
+					var writeHtmlTOCFd = fs.openSync(htmlTOCFilename, overwrite ? "w" : "wx");
+				} catch (e) {
+					console.log("*** Failed to open file to write: " + htmlTOCFilename + "\n" + e.toString());
+					continue;
+				}
+				
+				success = writeFile(writeHtmlTOCFd, new Buffer(htmlTOC));
+				fs.close(writeHtmlTOCFd);
+				if (!success) {
+					console.log("*** Failed to write: " + htmlTOCFilename);					
+				} else {
+					console.log("--> Wrote: " + htmlTOCFilename);
+				}
+			} else if (COPY_EXTENSIONS.indexOf(extension) !== -1) {
+				var readStream = fs.createReadStream(sourcePath);
+				(function(readStream, sourcePath) {
 					readStream.on("error", function(error) {
 						console.log("Failed to read " + sourcePath + "\n" + error.toString());
 					});
-					var writeStream = fs.createWriteStream(destinationPath);
+				})(readStream, sourcePath);
+				
+				var writeStream = fs.createWriteStream(destinationPath);
+				(function(writeStream, sourcePath, destinationPath) {
 					writeStream.on("error", function(error) {
 						console.log("Failed to write: " + destinationPath + "\n" + error.toString());
 					});
 					writeStream.on("close", function() {
 						console.log("-->Copied: " + sourcePath);
 					});
-					readStream.pipe(writeStream);
-				} else {
-					console.log("--> Skipped: " + sourcePath);
-				}
+				})(writeStream, sourcePath, destinationPath);
+				
+				readStream.pipe(writeStream);
+			} else {
+				console.log("--> Skipped: " + sourcePath);
 			}
-		});
-	});
+		}
+	}
 }
 
 console.log("");

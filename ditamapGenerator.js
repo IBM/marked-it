@@ -1,12 +1,12 @@
 ;(function() {
 // use strict
 
-var LINK = 1, HEADING = 2, PARAGRAPH = 3;
-var INIT = 0, INVALID = -1, V_MIN = LINK, V_MAX = PARAGRAPH;
+var LINK = 1, HEADING = 2;
+var INIT = 0, INVALID = -1, V_MIN = LINK, V_MAX = HEADING;
 
 /*
 A simple automata to consume TOC structure by infering
-start(0) -> [link(1) -> heading(2) -> paragraph(3)]+
+start(0) -> [link(1) -> heading(2)]+
 
 If unexpected input is encountered, the automata enters
 invalid state (-1) which does nothing for all input.
@@ -87,16 +87,6 @@ module.exports = {
 			}
 			tocBuffer += '</topicmeta>';
 
-			return true;
-		}
-		tocBuffer = null;
-		return false;
-	},
-	paragraph: function(text) {
-		if (automata.next(PARAGRAPH)) {
-			currentToc.description = text;
-			tocBuffer = tocBuffer.substring(0, tocBuffer.length - 12) +
-				'<shortdesc>' + text + '</shortdesc></topicmeta>';
 			return true;
 		}
 		tocBuffer = null;

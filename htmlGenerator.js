@@ -11,7 +11,7 @@ var spanAttributeRegex = /\{:((?:\\\}|[^\}])*)\}/;
 var headerIALRegex = /[ \t]+\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
 var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
 
-function generate(text, toc_builder, enableAttributes, baseURL) {
+function generate(text, enableAttributes, baseURL, toc_builder) {
 	attributeDefinitionLists = {};
 	inlineAttributeLists = [];
 	tokensStack = [];
@@ -188,7 +188,6 @@ function domToHtml(dom) {
 
 var customRenderer = new marked.Renderer();
 customRenderer.heading = function(text, level, raw) {
-	tocBuilder.heading(text, level, raw);
 	var textMatch = headerIALRegex.exec(text);
 	if (textMatch) {
 		text = text.substring(0, textMatch.index).trim();
@@ -208,7 +207,15 @@ customRenderer.heading = function(text, level, raw) {
 		token.inlineAttributes = token.inlineAttributes || [];
 		token.inlineAttributes.push(rawMatch[1].trim());
 	}
-	return applyToken(htmlString, token);
+
+	var result = applyToken(htmlString, token);
+	if (tocBuilder) {
+		/* ensure that all attribute lists have been applied before using the header's id */
+		dom = htmlToDom(result);
+		tocBuilder.heading(dom.text(), level, dom.attr("id").value());
+	}
+
+	return result;
 };
 customRenderer.code = function(code, lang, escaped) {
 	var result = marked.Renderer.prototype.code.call(this, code, lang, escaped);
@@ -247,7 +254,6 @@ customRenderer.listitem = function(text) {
 	return applyToken(htmlString, token);
 };
 customRenderer.paragraph = function(text) {
-	tocBuilder.paragraph(text);
 	var htmlString = marked.Renderer.prototype.paragraph.call(this, text);
 	var dom = htmlToDom(htmlString);
 	applySpanAttributes(dom);
@@ -293,7 +299,9 @@ customRenderer.table = function(header, body) {
 //	return applyToken(result, tokensStack.pop());
 //};
 customRenderer.link = function(href, title, text) {
-	tocBuilder.link(href, title, text);
+	if (tocBuilder) {
+		tocBuilder.link(href, title, text);
+	}
 	var htmlString = marked.Renderer.prototype.link.call(this, href, title, text);
 //	var dom = htmlToDom(htmlString);
 //	applySpanAttributes(dom);
