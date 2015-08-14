@@ -6,7 +6,7 @@ var inlineAttributeLists = [];
 var tokensStack = [];
 var tocBuilder;
 
-var blockAttributeRegex = /(^|\n)(([ \t>]*)(\{:(?:\\\}|[^\}])*\})[ \t]*\r?\n)/g;
+var blockAttributeRegex = /(^|(?:\r\n|\r|\n))(([ \t>]*)(\{:(?:\\\}|[^\}])*\})[ \t]*(?:\r\n|\r|\n))/g;
 var spanAttributeRegex = /\{:((?:\\\}|[^\}])*)\}/;
 var headerIALRegex = /[ \t]+\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
 var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
@@ -340,7 +340,14 @@ function applySpanAttributes(node) {
 
 function applyToken(htmlString, token) {
 //	console.log("pop " + token.type + " [" + asdf(tokensStack) + "]");
-	var endsWithNL = /\n$/.test(htmlString) || token.type === "code";
+
+	var endsWithNL = /(\r\n|\r|\n)$/.exec(htmlString);
+	if (endsWithNL) {
+		endsWithNL = endsWithNL[1];
+	} else if (token.type === "code") {
+		endsWithNL = "\n";
+	}
+
 	var root = htmlToDom(htmlString);
 	if (token.inlineAttributes) {
 		var attributes = computeAttributes(token.inlineAttributes);
@@ -351,7 +358,7 @@ function applyToken(htmlString, token) {
 			root.attr(newAttribute);
 		});
 	}
-	return domToHtml(root) + (endsWithNL ? "\n" : "");
+	return domToHtml(root) + (endsWithNL || "");
 }
 
 function computeAttributes(inlineAttributes) {
@@ -465,7 +472,7 @@ var _TYPEID_PARAGRAPH = "markup.other.paragraph.markdown";
 var _atxDetectRegex = /[>\s]*#/g;
 var _blockquoteStartRegex = /[ \t]*>[ \t]?/g;
 var _hrRegex = /([ \t]*[-*_]){3,}/g;
-var _newlineRegex = /\n/g;
+var _newlineRegex = /\r\n|\r|\n/g;
 var _spacesAndTabsRegex = /[ \t]*/g;
 var _whitespaceRegex = /\s+/g;
 
