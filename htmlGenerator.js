@@ -5,17 +5,20 @@ var attributeDefinitionLists = {};
 var inlineAttributeLists = [];
 var tokensStack = [];
 var tocBuilder;
+var enableAttributes;
 
 var blockAttributeRegex = /(^|(?:\r\n|\r|\n))(([ \t>]*)(\{:(?:\\\}|[^\}])*\})[ \t]*(?:\r\n|\r|\n))/g;
 var spanAttributeRegex = /\{:((?:\\\}|[^\}])*)\}/;
 var headerIALRegex = /[ \t]+\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
 var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
 
-function generate(text, enableAttributes, baseURL, toc_builder) {
+
+function generate(text, enable_attributes, baseURL, toc_builder) {
 	attributeDefinitionLists = {};
 	inlineAttributeLists = [];
 	tokensStack = [];
 	tocBuilder = toc_builder;
+	enableAttributes = enable_attributes;
 	
 	if (baseURL) {
 		marked.InlineLexer.prototype.outputLink = baseURL;
@@ -186,6 +189,16 @@ function domToHtml(dom) {
 	return string.replace(/&amp;/g, "&");
 }
 
+function unescape(html) {
+	/* used by blockquote for "elementKind" */
+	return html
+		.replace(/&amp;/g, '&(?!#?\w+;)')
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&#39;/g, "'");
+}
+
 var customRenderer = new marked.Renderer();
 customRenderer.heading = function(text, level, raw) {
 	var textMatch = headerIALRegex.exec(text);
@@ -222,7 +235,31 @@ customRenderer.code = function(code, lang, escaped) {
 	return applyToken(result, tokensStack.pop());
 };
 customRenderer.blockquote = function(quote) {
-	var result = marked.Renderer.prototype.blockquote.call(this, quote);
+	/*
+	 * Since blockquote is a container element, use it as an opportunity to define arbitrary kinds of
+	 * container elements by looking for the "elementKind" attribute.  This is very hacky.
+	 */
+	var result;
+	var attributesRegex = /<p>{:(.+)}<\/p>/;
+	var match = attributesRegex.exec(quote);
+	if (enableAttributes && match) {
+		/* found attributes */
+		quote = quote.replace(match[0], "").trim();
+		var attributes = unescape(match[1]);
+		var kindOfRegex = /elementKind=(['"])([^\1]+?)\1/;
+		var elementName = "blockquote";
+		match = kindOfRegex.exec(attributes);
+		if (match) {
+			/* found an elementKind attribute, which is handled specially */
+			elementName = match[2];
+			attributes = attributes.replace(match[0], "").trim();
+		}
+		result = "<" + elementName + " " + attributes + ">\n" + quote + "\n</" + elementName + ">\n";
+	} else {
+		/* no attributes to handle, so just return the default renderer's text */
+		result = marked.Renderer.prototype.blockquote.call(this, quote);		
+	}
+
 	return applyToken(result, tokensStack.pop());
 };
 customRenderer.html = function(html) {
@@ -362,6 +399,7 @@ function applyToken(htmlString, token) {
 }
 
 function computeAttributes(inlineAttributes) {
+	var keys;
 	var result = {};
 	var idRegex = /#([\S]+)/;
 	var classRegex = /\.(-?[_a-zA-Z]+[_a-zA-Z0-9-]*)/;
@@ -392,7 +430,7 @@ function computeAttributes(inlineAttributes) {
 						} else {
 							if (attributeDefinitionLists[segmentMatch]) {
 								var attributes = computeAttributes([attributeDefinitionLists[segmentMatch]]);
-								var keys = Object.keys(attributes);
+								keys = Object.keys(attributes);
 								keys.forEach(function(key) {
 									if (key === "class" && inheritedAttributes[key]) {
 										/* merge conflicting class values rather than overwriting */
