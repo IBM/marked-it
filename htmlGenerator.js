@@ -12,6 +12,7 @@ var spanAttributeRegex = /\{:((?:\\\}|[^\}])*)\}/;
 var headerIALRegex = /[ \t]+\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
 var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
 
+var kindOfRegex = /elementKind=(['"])([^\1]+?)\1/; /* remove when elementKind support is dropped */
 
 function generate(text, enable_attributes, baseURL, toc_builder) {
 	attributeDefinitionLists = {};
@@ -31,9 +32,13 @@ function generate(text, enable_attributes, baseURL, toc_builder) {
 			var index = match.index + match[1].length + match[3].length;
 			var lineStart = match.index + match[1].length;
 			var lineEnd = match.index + match[0].length;
-			attributeLists.push({index: index, lineStart: lineStart, match: match});
-			text = text.substring(0, lineStart) + text.substring(lineEnd);
-			blockAttributeRegex.lastIndex = match.index;
+			if (!kindOfRegex.test(match[4])) { /* remove this check when elementKind support is dropped */
+				attributeLists.push({index: index, lineStart: lineStart, match: match});
+				text = text.substring(0, lineStart) + text.substring(lineEnd);
+				blockAttributeRegex.lastIndex = match.index;
+			} else {
+				blockAttributeRegex.lastIndex += match[0].length;
+			}
 			match = blockAttributeRegex.exec(text);
 		}
 
@@ -237,7 +242,8 @@ customRenderer.code = function(code, lang, escaped) {
 customRenderer.blockquote = function(quote) {
 	/*
 	 * Since blockquote is a container element, use it as an opportunity to define arbitrary kinds of
-	 * container elements by looking for the "elementKind" attribute.  This is very hacky.
+	 * container elements by looking for the "elementKind" attribute.  This is very hacky and should
+	 * be dropped.
 	 */
 	var result;
 	var attributesRegex = /<p>{:(.+)}<\/p>/;
@@ -246,7 +252,6 @@ customRenderer.blockquote = function(quote) {
 		/* found attributes */
 		quote = quote.replace(match[0], "").trim();
 		var attributes = unescape(match[1]);
-		var kindOfRegex = /elementKind=(['"])([^\1]+?)\1/;
 		var elementName = "blockquote";
 		match = kindOfRegex.exec(attributes);
 		if (match) {
