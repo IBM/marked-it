@@ -852,6 +852,18 @@ function computeBlocks(text, block, offset) {
 			};
 			typeId = _TYPEID_PARAGRAPH;
 			contentToken = tokens[i];
+		} else if (tokens[i].type === "html") { //$NON-NLS-0$
+			end = advanceIndex(text, tokens[i], index);
+			end = getLineEnd(text, end);
+			bounds = {
+				start: index,
+				contentStart: index,
+				contentEnd: end,
+				end: end
+			};
+			typeId = "markup.raw.html.markdown"; //$NON-NLS-0$
+			contentToken = tokens[i];
+			index = end;
 		}
 
 		if (typeId) {
