@@ -269,6 +269,11 @@ customRenderer.blockquote = function(quote) {
 };
 customRenderer.html = function(html) {
 	var result = marked.Renderer.prototype.html.call(this, html);
+
+	/* remove all <!-- --> comments in order to avoid XML parse error in applyToken() */
+	var commentRegex = /<!--(?:.(?!-->))*.-->/g;
+	result = result.replace(commentRegex, "").trim();
+	
 	return applyToken(result, tokensStack.pop());
 };
 customRenderer.hr = function() {
@@ -383,6 +388,10 @@ function applySpanAttributes(node) {
 function applyToken(htmlString, token) {
 //	console.log("pop " + token.type + " [" + asdf(tokensStack) + "]");
 
+	if (!htmlString) {
+		return htmlString;
+	}
+	
 	var endsWithNL = /(\r\n|\r|\n)$/.exec(htmlString);
 	if (endsWithNL) {
 		endsWithNL = endsWithNL[1];
