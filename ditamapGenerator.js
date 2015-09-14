@@ -33,12 +33,12 @@ var stack = [], currentTocs = [], currentToc;
 stack.push(currentTocs);
 
 /* String representation of the TOC tree structure */
-var tocBuffer = '<map>';
+var tocBuffer = '<map>\n';
 
 module.exports = {
 	reset: function() {
 		automata.reset();
-		tocBuffer = '<map>';
+		tocBuffer = '<map>\n';
 		stack = [];
 		currentTocs = [];
 		stack.push(currentTocs);
@@ -62,11 +62,11 @@ module.exports = {
 			while (level < stack.length) {
 				stack.pop();
 				currentTocs = stack[stack.length-1];
-				tocBuffer += '</topicref>';
+				tocBuffer += '</topicref>\n';
 			}
 			if (level == stack.length) { // current level
 				if (currentTocs.length > 0) {
-					tocBuffer += '</topicref>';
+					tocBuffer += '</topicref>\n';
 				}
 				currentTocs.push(currentToc);
 			} else if (level == stack.length + 1) { // next level
@@ -81,11 +81,11 @@ module.exports = {
 			}
 
 			tocBuffer += '<topicref href="' + currentToc.href +
-				'" navtitle="' + currentToc.title + '"><topicmeta>';
+				'" navtitle="' + currentToc.title + '">\n<topicmeta>';
 			if (currentToc.linktext) {
 				tocBuffer += '<linktext>' + currentToc.linktext + '</linktext>';
 			}
-			tocBuffer += '</topicmeta>';
+			tocBuffer += '</topicmeta>\n';
 
 			return true;
 		}
@@ -98,9 +98,13 @@ module.exports = {
 		}
 		if (stack.length == 1 && currentTocs.length === 0) {
 			// empty map or potential first TOC detected
-			return currentToc ? '<map></map>' : null;
+			return currentToc ? '<map></map>\n' : null;
 		}
-		return tocBuffer + '</topicref></map>';
+		var topicClosers = '';
+		for (var i = 0; i < stack.length; i++) {
+			topicClosers += '</topicref>\n';
+		}
+		return tocBuffer + topicClosers + '</map>\n';
 	}
 };
 
