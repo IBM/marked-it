@@ -14,7 +14,7 @@
   "keywords": ["markdown", "marked", "html"],
   "dependencies": {
     "marked": "0.3.2",
-    "libxmljs": "0.14.0",
+    "htmlparser2": "3.8.3",
     "read-yaml": "^1.0.0"},
   "devDependencies": {"mocha": "2.2.5"},
   "author": "Grant Gayed",

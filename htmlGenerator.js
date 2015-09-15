@@ -1,4 +1,4 @@
-var libxmljs = require('libxmljs');
+var htmlparser = require("htmlparser2");
 var marked = require('marked');
 
 var attributeDefinitionLists = {};
@@ -185,13 +185,23 @@ function findBlock(parentBlock, offset) {
 var markedOptions = {tables: true, gfm: true, headerPrefix: "", xhtml: true};
 
 function htmlToDom(string) {
-	string = string.replace(/&/g, "&amp;");
-	return libxmljs.parseXml(string).root();
+	var result;
+	var handler = new htmlparser.DomHandler(function (error, dom) {
+	    if (error) {
+	        //[...do something for errors...] // TODO
+	    } else {
+	        result = dom;
+	    }
+	});
+	var parser = new htmlparser.Parser(handler, {decodeEntities: true});
+	parser.write(string.trim());
+	parser.done();
+
+	return result[0];
 }
 
 function domToHtml(dom) {
-	var string = dom.toString();
-	return string.replace(/&amp;/g, "&");
+	return htmlparser.DomUtils.getOuterHTML(dom);
 }
 
 function unescape(html) {
@@ -230,7 +240,7 @@ customRenderer.heading = function(text, level, raw) {
 	if (tocBuilder) {
 		/* ensure that all attribute lists have been applied before using the header's id */
 		dom = htmlToDom(result);
-		tocBuilder.heading(dom.text(), level, dom.attr("id").value());
+		tocBuilder.heading(htmlparser.DomUtils.getText(dom), level, dom.attribs["id"]);
 	}
 
 	return result;
@@ -269,11 +279,6 @@ customRenderer.blockquote = function(quote) {
 };
 customRenderer.html = function(html) {
 	var result = marked.Renderer.prototype.html.call(this, html);
-
-	/* remove all <!-- --> comments in order to avoid XML parse error in applyToken() */
-	var commentRegex = /<!--(?:.(?!-->))*.-->/g;
-	result = result.replace(commentRegex, "").trim();
-	
 	return applyToken(result, tokensStack.pop());
 };
 customRenderer.hr = function() {
@@ -361,21 +366,21 @@ customRenderer.link = function(href, title, text) {
 //};
 
 function applySpanAttributes(node) {
-	var childNodes = node.childNodes();
+	var domUtils = htmlparser.DomUtils;
+	var childNodes = domUtils.getChildren(node) || [];
 	for (var i = 0; i < childNodes.length; i++) {
 		var child = childNodes[i];
-		if (child.name() === "text") {
-			var match = spanAttributeRegex.exec(child.text());
+		if (child.type === "text") {
+			var childText = domUtils.getText(child);
+			var match = spanAttributeRegex.exec(childText);
 			if (match && !match.index) {
-				var previousSibling = child.prevSibling();
+				var previousSibling = child.prev;
 				if (previousSibling) {
-					child.text(child.text().substring(match[0].length));
+					child.text = childText.substring(match[0].length);
 					var attributes = computeAttributes([match[1].trim()]);
 					var keys = Object.keys(attributes);
 					keys.forEach(function(current) {
-						var newAttribute = {};
-						newAttribute[current] = attributes[current];
-						previousSibling.attr(newAttribute);
+						previousSibling.attribs[current] = attributes[current];
 					});
 					i--; /* decrement so that the current child will be tried again */
 				}
@@ -404,9 +409,7 @@ function applyToken(htmlString, token) {
 		var attributes = computeAttributes(token.inlineAttributes);
 		var keys = Object.keys(attributes);
 		keys.forEach(function(current) {
-			var newAttribute = {};
-			newAttribute[current] = attributes[current];
-			root.attr(newAttribute);
+			root.attribs[current] = attributes[current];
 		});
 	}
 	return domToHtml(root) + (endsWithNL || "");
