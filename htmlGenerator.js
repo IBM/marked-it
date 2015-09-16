@@ -188,7 +188,7 @@ function htmlToDom(string) {
 	var result;
 	var handler = new htmlparser.DomHandler(function (error, dom) {
 	    if (error) {
-	        //[...do something for errors...] // TODO
+	        console.log("*** Failed to parse HTML:\n" + error.toString());
 	    } else {
 	        result = dom;
 	    }
@@ -421,7 +421,7 @@ function computeAttributes(inlineAttributes) {
 	var idRegex = /#([\S]+)/;
 	var classRegex = /\.(-?[_a-zA-Z]+[_a-zA-Z0-9-]*)/;
 	var attributeRegex = /([^\/>"'=]+)=(['"])([^\2]+)\2/;
-	var segmentRegex = /([^ \t'"]|((['"])[^\3]*\3))+/g;
+	var segmentRegex = /([^ \t'"]|((['"])(.(?!\3))*.\3))+/g;
 
 	var inheritedAttributes = {}; /* from ADLs */
 	var localAttributes = {}; /* from IALs */
