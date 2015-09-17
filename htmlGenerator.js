@@ -193,7 +193,7 @@ function htmlToDom(string) {
 	        result = dom;
 	    }
 	});
-	var parser = new htmlparser.Parser(handler, {decodeEntities: true});
+	var parser = new htmlparser.Parser(handler);
 	parser.write(string.trim());
 	parser.done();
 
