@@ -29,7 +29,7 @@ var SWITCH_TOC = "-disableTOC";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
 var SWITCH_CONREFFILE = "--conrefFile";
-var COPY_EXTENSIONS = [EXTENSION_HTML, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg"];
+var COPY_EXTENSIONS = [EXTENSION_HTML, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg", ".pdf"];
 
 var sourceDir, destinationDir, baseURL, overwrite, disableAttributes, disableTOC, headerFile, footerFile, headerText, footerText;
 var conrefFile, conrefMap;
