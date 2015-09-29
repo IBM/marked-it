@@ -376,7 +376,7 @@ function applySpanAttributes(node) {
 			if (match && !match.index) {
 				var previousSibling = child.prev;
 				if (previousSibling) {
-					child.text = childText.substring(match[0].length);
+					child.data = childText.substring(match[0].length);
 					var attributes = computeAttributes([match[1].trim()]);
 					var keys = Object.keys(attributes);
 					keys.forEach(function(current) {
