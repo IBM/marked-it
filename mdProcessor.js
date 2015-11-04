@@ -10,14 +10,15 @@
 
 var fs = require("fs");
 var path = require("path");
-var htmlGenerator = require("./htmlGenerator");
-var mdTOCGenerator = require("./mdTOCGenerator");
-var ditamapGenerator = require("./ditamapGenerator");
+var htmlGenerator = require("./libs/htmlGenerator");
+var mdTOCGenerator = require("./libs/mdTOCGenerator");
+var ditamapGenerator = require("./libs/ditamapGenerator");
 
 var EXTENSION_DITAMAP = ".ditamap";
 var EXTENSION_HTML = ".html";
 var EXTENSION_HTML_TOC = "TOC.html";
 var EXTENSION_MARKDOWN = ".md";
+var EXTENSION_PDF = ".pdf";
 var EXTENSION_MARKDOWN_TOC = "TOC.md";
 var EXTENSION_MARKDOWN_REGEX = /\.md$/gi;
 var SWITCH_SOURCEDIR = "--sourceDir";
@@ -26,13 +27,19 @@ var SWITCH_BASEURL = "--baseURL";
 var SWITCH_OVERWRITE = "-overwrite";
 var SWITCH_ATTRIBUTES = "-disableAttributes";
 var SWITCH_TOC = "-disableTOC";
+var SWITCH_PDFSETTINGSFILE = "--pdfSettingsFile";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
 var SWITCH_CONREFFILE = "--conrefFile";
-var COPY_EXTENSIONS = [EXTENSION_HTML, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg", ".pdf", ".js", ".txt", ".xml", ".json"];
+var COPY_EXTENSIONS = [EXTENSION_HTML, EXTENSION_PDF, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg", ".js", ".txt", ".xml", ".json"];
+var DEFAULT_PDFSETTINGS = { format: 'Letter' };
 
-var sourceDir, destinationDir, baseURL, overwrite, disableAttributes, disableTOC, headerFile, footerFile, headerText, footerText;
+var sourceDir, destinationDir, baseURL, overwrite, disableAttributes, disableTOC
+var headerFile, headerText;
+var footerFile, footerText;
+var pdfSettingsFile, pdfSettings;
 var conrefFile, conrefMap;
+var pdf;
 
 var switchCounter = 0;
 process.argv.forEach(function(arg) {
@@ -53,6 +60,8 @@ process.argv.forEach(function(arg) {
 		headerFile = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_FOOTERFILE) === 0 && arg.indexOf("=") !== -1) {
 		footerFile = arg.substring(arg.indexOf("=") + 1);
+	} else if (arg.indexOf(SWITCH_PDFSETTINGSFILE) === 0 && arg.indexOf("=") !== -1) {
+		pdfSettingsFile = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_CONREFFILE) === 0 && arg.indexOf("=") !== -1) {
 		conrefFile = arg.substring(arg.indexOf("=") + 1);
 	} else {
@@ -82,16 +91,51 @@ if (!fs.existsSync(destinationDir)) {
 	}
 }
 
+var fd = null;
 if (headerFile) {
-	var fd = fs.openSync(headerFile, "r");
-	headerText = readFile(fd);
-	fs.close(fd);
+	try {
+		fd = fs.openSync(headerFile, "r");
+	} catch (e) {
+		console.log("*** Failed to open file to read: " + headerFile + "\n" + e.toString());
+	}
+	
+	if (fd) {
+		headerText = readFile(fd);
+		fs.close(fd);
+	}
 }
 
 if (footerFile) {
-	fd = fs.openSync(footerFile, "r");
-	footerText = readFile(fd);
-	fs.close(fd);
+	fd = null;
+	try {
+		fd = fs.openSync(footerFile, "r");
+	} catch (e) {
+		console.log("*** Failed to open file to read: " + footerFile + "\n" + e.toString());
+	}
+	
+	if (fd) {
+		footerText = readFile(fd);
+		fs.close(fd);
+	}
+}
+
+if (pdfSettingsFile) {
+	pdf = require('html-pdf');
+	fd = null;
+	try {
+		fd = fs.openSync(pdfSettingsFile, "r");
+	} catch (e) {
+		console.log("*** Failed to open file to read " + pdfSettingsFile + ", will use default pdf generation settings.\n" + e.toString());
+	}
+
+	if (fd) {
+		try {
+			pdfSettings = JSON.parse(readFile(fd));
+		} catch (e) {
+			console.log("*** Failed to parse pdf settings file " + pdfSettingsFile + ", will use default pdf generation settings.\n" + e.toString());
+		}
+		fs.close(fd);
+	}
 }
 
 if (conrefFile) {
@@ -151,24 +195,26 @@ function traverse_tree(source, destination) {
 					continue;
 				}
 
-				var outBuffer = new Buffer(markdownText);
+				var htmlOutput = "";
+				if (headerText) {
+					htmlOutput += headerText;
+				} else {
+					htmlOutput += "<html><body>";
+				}
+				htmlOutput += markdownText;
+				if (footerText) {
+					htmlOutput += footerText;
+				} else {
+					htmlOutput += "</body></html>";
+				}
+
 				try {
 					var writeHTMLFd = fs.openSync(destinationPath, overwrite ? "w" : "wx");
 				} catch (e) {
 					console.log("*** Failed to open file to write: " + destinationPath + "\n" + e.toString());
 					continue;
 				}
-				
-				var success = true;
-				if (headerText) {
-					success = writeFile(writeHTMLFd, new Buffer(headerText));
-				}
-				if (success) {
-					success = writeFile(writeHTMLFd, outBuffer);
-				}
-				if (success && footerText) {
-					success = writeFile(writeHTMLFd, new Buffer(footerText));
-				}
+				var success = writeFile(writeHTMLFd, new Buffer(htmlOutput));
 				fs.close(writeHTMLFd);
 				if (!success) {
 					console.log("*** Failed to write: " + destinationPath);
@@ -177,72 +223,95 @@ function traverse_tree(source, destination) {
 				
 				console.log("--> Wrote: " + destinationPath);
 
-				if (disableTOC) {
-					continue;
-				}
-				
-				var mdTOC = mdTOCGenerator.buffer();
-				if (!mdTOC) {
-					continue;
-				}
-				
-				var tocFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_MARKDOWN_TOC));
-				try {
-					var writeTOCFd = fs.openSync(tocFilename, overwrite ? "w" : "wx");
-				} catch (e) {
-					console.log("*** Failed to open file to write: " + tocFilename + "\n" + e.toString());
-					continue;
-				}
-				
-				var success = writeFile(writeTOCFd, new Buffer(mdTOC));
-				fs.close(writeTOCFd);
-				if (!success) {
-					console.log("*** Failed to write: " + tocFilename);
-					continue;
-				}
-				
-				console.log("--> Wrote: " + tocFilename);
-				ditamapGenerator.reset();
-				var htmlTOC = htmlGenerator.generate(mdTOC, !disableAttributes, baseURL, ditamapGenerator);
-				if (!htmlTOC) {
-					console.log("*** Failed during conversion of markdown TOC to ditamap file " + tocFilename);
-					continue;
+				if (pdf) {
+					pdf.create(htmlOutput, pdfSettings || DEFAULT_PDFSETTINGS).toBuffer(function(err, buffer) {
+						if (err) {
+							console.log("*** Failed to generate .pdf content for " + outputFilename + ": " + err);
+						} else {
+							var pdfPath = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_PDF));
+							var writePdfFd = null;
+							try {
+								writePdfFd = fs.openSync(pdfPath, overwrite ? "w" : "wx");
+							} catch (e) {
+								console.log("*** Failed to open file to write: " + pdfPath + "\n" + e.toString());
+							}
+							if (writePdfFd) {
+								success = writeFile(writePdfFd, buffer);
+								fs.close(writePdfFd);
+								if (success) {
+									console.log("--> Wrote: " + pdfPath);
+								} else {
+									console.log("*** Failed to write: " + pdfPath);
+								}
+							}
+						}
+					});
 				}
 
-				var ditamap = ditamapGenerator.buffer();
-				if (!ditamap) {
-					continue;
-				}
+				if (!disableTOC) {
+					var mdTOC = mdTOCGenerator.buffer();
+					if (!mdTOC) {
+						continue;
+					}
 
-				var ditamapFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_DITAMAP));
-				try {
-					var writeDitamapFd = fs.openSync(ditamapFilename, overwrite ? "w" : "wx");
-				} catch (e) {
-					console.log("*** Failed to open file to write: " + ditamapFilename + "\n" + e.toString());
-					continue;
-				}
+					var tocFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_MARKDOWN_TOC));
+					try {
+						var writeTOCFd = fs.openSync(tocFilename, overwrite ? "w" : "wx");
+					} catch (e) {
+						console.log("*** Failed to open file to write: " + tocFilename + "\n" + e.toString());
+						continue;
+					}
 
-				success = writeFile(writeDitamapFd, new Buffer(ditamap));
-				fs.close(writeDitamapFd);
-				if (!success) {
-					console.log("*** Failed to write: " + ditamapFilename);					
-				}
-				
-				console.log("--> Wrote: " + ditamapFilename);
-				var htmlTOCFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML_TOC));
-				try {
-					var writeHtmlTOCFd = fs.openSync(htmlTOCFilename, overwrite ? "w" : "wx");
-				} catch (e) {
-					console.log("*** Failed to open file to write: " + htmlTOCFilename + "\n" + e.toString());
-					continue;
-				}
-				
-				success = writeFile(writeHtmlTOCFd, new Buffer(htmlTOC));
-				fs.close(writeHtmlTOCFd);
-				if (!success) {
-					console.log("*** Failed to write: " + htmlTOCFilename);					
-				} else {
-					console.log("--> Wrote: " + htmlTOCFilename);
+					var success = writeFile(writeTOCFd, new Buffer(mdTOC));
+					fs.close(writeTOCFd);
+					if (!success) {
+						console.log("*** Failed to write: " + tocFilename);
+						continue;
+					}
+
+					console.log("--> Wrote: " + tocFilename);
+					ditamapGenerator.reset();
+					var htmlTOC = htmlGenerator.generate(mdTOC, !disableAttributes, baseURL, ditamapGenerator);
+					if (!htmlTOC) {
+						console.log("*** Failed during conversion of markdown TOC to ditamap file " + tocFilename);
+						continue;
+					}
+
+					var ditamap = ditamapGenerator.buffer();
+					if (!ditamap) {
+						continue;
+					}
+
+					var ditamapFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_DITAMAP));
+					try {
+						var writeDitamapFd = fs.openSync(ditamapFilename, overwrite ? "w" : "wx");
+					} catch (e) {
+						console.log("*** Failed to open file to write: " + ditamapFilename + "\n" + e.toString());
+						continue;
+					}
+
+					success = writeFile(writeDitamapFd, new Buffer(ditamap));
+					fs.close(writeDitamapFd);
+					if (!success) {
+						console.log("*** Failed to write: " + ditamapFilename);
+					}
+					
+					console.log("--> Wrote: " + ditamapFilename);
+					var htmlTOCFilename = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_HTML_TOC));
+					try {
+						var writeHtmlTOCFd = fs.openSync(htmlTOCFilename, overwrite ? "w" : "wx");
+					} catch (e) {
+						console.log("*** Failed to open file to write: " + htmlTOCFilename + "\n" + e.toString());
+						continue;
+					}
+					
+					success = writeFile(writeHtmlTOCFd, new Buffer(htmlTOC));
+					fs.close(writeHtmlTOCFd);
+					if (!success) {
+						console.log("*** Failed to write: " + htmlTOCFilename);
+					} else {
+						console.log("--> Wrote: " + htmlTOCFilename);
+					}
 				}
 			} else if (COPY_EXTENSIONS.indexOf(extension) !== -1) {
 				var readStream = fs.createReadStream(sourcePath);
