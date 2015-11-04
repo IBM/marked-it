@@ -32,14 +32,14 @@ var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
 var SWITCH_CONREFFILE = "--conrefFile";
 var COPY_EXTENSIONS = [EXTENSION_HTML, EXTENSION_PDF, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg", ".js", ".txt", ".xml", ".json"];
-var DEFAULT_PDFSETTINGS = { format: 'Letter' };
+var DEFAULT_PDFSETTINGS = {pageSize: 'Letter'}; // TODO define a more complete defaults object
 
-var sourceDir, destinationDir, baseURL, overwrite, disableAttributes, disableTOC
+var sourceDir, destinationDir, baseURL, overwrite, disableAttributes, disablePDF, disableTOC
 var headerFile, headerText;
 var footerFile, footerText;
 var pdfSettingsFile, pdfSettings;
 var conrefFile, conrefMap;
-var pdf;
+var wkHtmlToPdf;
 
 var switchCounter = 0;
 process.argv.forEach(function(arg) {
@@ -120,12 +120,12 @@ if (footerFile) {
 }
 
 if (pdfSettingsFile) {
-	pdf = require('html-pdf');
+	wkHtmlToPdf = require('wkhtmltopdf');
 	fd = null;
 	try {
 		fd = fs.openSync(pdfSettingsFile, "r");
 	} catch (e) {
-		console.log("*** Failed to open file to read " + pdfSettingsFile + ", will use default pdf generation settings.\n" + e.toString());
+		console.log("*** Failed to open file to read " + pdfSettingsFile + ", will use default pdf generation settings.\n" + (e.code === "ENOENT" ? "" : e.toString()));
 	}
 
 	if (fd) {
@@ -223,29 +223,24 @@ function traverse_tree(source, destination) {
 				
 				console.log("--> Wrote: " + destinationPath);
 
-				if (pdf) {
-					pdf.create(htmlOutput, pdfSettings || DEFAULT_PDFSETTINGS).toBuffer(function(err, buffer) {
-						if (err) {
-							console.log("*** Failed to generate .pdf content for " + outputFilename + ": " + err);
-						} else {
-							var pdfPath = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_PDF));
-							var writePdfFd = null;
-							try {
-								writePdfFd = fs.openSync(pdfPath, overwrite ? "w" : "wx");
-							} catch (e) {
-								console.log("*** Failed to open file to write: " + pdfPath + "\n" + e.toString());
-							}
-							if (writePdfFd) {
-								success = writeFile(writePdfFd, buffer);
-								fs.close(writePdfFd);
-								if (success) {
-									console.log("--> Wrote: " + pdfPath);
-								} else {
-									console.log("*** Failed to write: " + pdfPath);
-								}
-							}
+				if (wkHtmlToPdf) {
+					var pdfPath = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_PDF));
+					var pdfStream = null;
+					try {
+						pdfStream = fs.createWriteStream(pdfPath, {flags: overwrite ? "w" : "wx"});
+					} catch (e) {
+						console.log("*** Failed to open file to write: " + pdfPath + "\n" + e.toString());
+					};
+
+					if (pdfStream) {
+						try {
+							var htmlPath = fs.realpathSync(destinationPath);
+							wkHtmlToPdf("file://" + htmlPath, pdfSettings || DEFAULT_PDFSETTINGS).pipe(pdfStream);
+							console.log("--> Wrote: " + pdfPath);
+						} catch (e) {
+							console.log("*** Failed to generate .pdf output for " + pdfPath + ": " + e);
 						}
-					});
+					}
 				}
 
 				if (!disableTOC) {

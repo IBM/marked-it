@@ -15,6 +15,7 @@
   "dependencies": {
     "marked": "0.3.2",
     "htmlparser2": "3.8.3",
+    "wkhtmltopdf": "0.1.5",
     "read-yaml": "^1.0.0"},
   "devDependencies": {"mocha": "2.2.5"},
   "author": "Grant Gayed",
