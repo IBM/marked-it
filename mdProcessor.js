@@ -16,6 +16,7 @@ var ditamapGenerator = require("./libs/ditamapGenerator");
 
 var EXTENSION_DITAMAP = ".ditamap";
 var EXTENSION_HTML = ".html";
+var EXTENSION_HTML_REGEX = /\.html$/;
 var EXTENSION_HTML_TOC = "TOC.html";
 var EXTENSION_MARKDOWN = ".md";
 var EXTENSION_PDF = ".pdf";
@@ -33,6 +34,7 @@ var SWITCH_FOOTERFILE = "--footerFile";
 var SWITCH_CONREFFILE = "--conrefFile";
 var COPY_EXTENSIONS = [EXTENSION_HTML, EXTENSION_PDF, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg", ".js", ".txt", ".xml", ".json"];
 var DEFAULT_PDFSETTINGS = {pageSize: 'Letter'}; // TODO define a more complete defaults object
+var TIMEOUT_PDF = 1000;
 
 var sourceDir, destinationDir, baseURL, overwrite, disableAttributes, disablePDF, disableTOC
 var headerFile, headerText;
@@ -40,6 +42,7 @@ var footerFile, footerText;
 var pdfSettingsFile, pdfSettings;
 var conrefFile, conrefMap;
 var wkHtmlToPdf;
+var pdfQueue = [];
 
 var switchCounter = 0;
 process.argv.forEach(function(arg) {
@@ -224,23 +227,7 @@ function traverse_tree(source, destination) {
 				console.log("--> Wrote: " + destinationPath);
 
 				if (wkHtmlToPdf) {
-					var pdfPath = path.join(destination, current.replace(EXTENSION_MARKDOWN_REGEX, EXTENSION_PDF));
-					var pdfStream = null;
-					try {
-						pdfStream = fs.createWriteStream(pdfPath, {flags: overwrite ? "w" : "wx"});
-					} catch (e) {
-						console.log("*** Failed to open file to write: " + pdfPath + "\n" + e.toString());
-					};
-
-					if (pdfStream) {
-						try {
-							var htmlPath = fs.realpathSync(destinationPath);
-							wkHtmlToPdf("file://" + htmlPath, pdfSettings || DEFAULT_PDFSETTINGS).pipe(pdfStream);
-							console.log("--> Wrote: " + pdfPath);
-						} catch (e) {
-							console.log("*** Failed to generate .pdf output for " + pdfPath + ": " + e);
-						}
-					}
+					generatePDF(fs.realpathSync(destinationPath));
 				}
 
 				if (!disableTOC) {
@@ -336,6 +323,7 @@ function traverse_tree(source, destination) {
 
 console.log("");
 traverse_tree(sourceDir, destinationDir);
+done();
 
 function readFile(fd) {
 	var readStat = fs.fstatSync(fd);
@@ -421,4 +409,42 @@ function replaceVariables(text) { /* conref variables */
 	}
 	result += text.substring(pos);
 	return result;
+}
+
+/*
+ * On Windows, wkHtmlToPdf can interfere with other concurrent file operations, including file operations running
+ * in other instances of itself.  To mitigate this, queue all .pdf generation requests initially, and process them
+ * at a defined interval after all other generation has completed.
+ */
+
+function generatePDF(htmlPath) {
+	pdfQueue.push(htmlPath);
+}
+
+function done() {
+	var fn = function() {
+		if (!pdfQueue.length) {
+			return;
+		}
+
+		var htmlPath = pdfQueue.splice(0, 1)[0];
+		var pdfPath = htmlPath.replace(EXTENSION_HTML_REGEX, EXTENSION_PDF);
+		var pdfStream = null;
+		try {
+			pdfStream = fs.createWriteStream(pdfPath, {flags: overwrite ? "w" : "wx"});
+		} catch (e) {
+			console.log("*** Failed to open file to write: " + pdfPath + "\n" + e.toString());
+		};
+
+		if (pdfStream) {
+			try {
+				wkHtmlToPdf("file:///" + htmlPath, pdfSettings || DEFAULT_PDFSETTINGS).pipe(pdfStream);
+				console.log("--> Wrote: " + pdfPath);
+			} catch (e) {
+				console.log("*** Failed to generate .pdf output for " + pdfPath + ": " + e);
+			}
+		}
+		setTimeout(fn, TIMEOUT_PDF);
+	};
+	setTimeout(fn, TIMEOUT_PDF);
 }
