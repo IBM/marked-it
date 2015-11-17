@@ -1,5 +1,6 @@
+var common = require("./common");
 var htmlparser = require("htmlparser2");
-var marked = require('marked');
+var marked = require("marked");
 
 var attributeDefinitionLists = {};
 var inlineAttributeLists = [];
@@ -184,26 +185,6 @@ function findBlock(parentBlock, offset) {
 
 var markedOptions = {tables: true, gfm: true, headerPrefix: "", xhtml: true};
 
-function htmlToDom(string) {
-	var result;
-	var handler = new htmlparser.DomHandler(function (error, dom) {
-	    if (error) {
-	        console.log("*** Failed to parse HTML:\n" + error.toString());
-	    } else {
-	        result = dom;
-	    }
-	});
-	var parser = new htmlparser.Parser(handler);
-	parser.write(string.trim());
-	parser.done();
-
-	return result[0];
-}
-
-function domToHtml(dom) {
-	return htmlparser.DomUtils.getOuterHTML(dom);
-}
-
 function unescape(html) {
 	/* used by blockquote for "elementKind" */
 	return html
@@ -227,9 +208,9 @@ customRenderer.heading = function(text, level, raw) {
 	raw = raw.replace(new RegExp(spanAttributeRegex.source, "g"), "");
 
 	var htmlString = marked.Renderer.prototype.heading.call(this, text, level, raw);
-	var dom = htmlToDom(htmlString);
+	var dom = common.htmlToDom(htmlString);
 	applySpanAttributes(dom);
-	htmlString = domToHtml(dom);
+	htmlString = common.domToHtml(dom);
 	var token = tokensStack.pop();
 	if (rawMatch) {
 		token.inlineAttributes = token.inlineAttributes || [];
@@ -239,7 +220,7 @@ customRenderer.heading = function(text, level, raw) {
 	var result = applyToken(htmlString, token);
 	if (tocBuilder) {
 		/* ensure that all attribute lists have been applied before using the header's id */
-		dom = htmlToDom(result);
+		dom = common.htmlToDom(result);
 		tocBuilder.heading(htmlparser.DomUtils.getText(dom), level, dom.attribs["id"]);
 	}
 
@@ -295,9 +276,9 @@ customRenderer.listitem = function(text) {
 		text = text.substring(match[0].length).trim();
 	}
 	var htmlString = marked.Renderer.prototype.listitem.call(this, text);
-	var dom = htmlToDom(htmlString);
+	var dom = common.htmlToDom(htmlString);
 	applySpanAttributes(dom);
-	htmlString = domToHtml(dom);
+	htmlString = common.domToHtml(dom);
 	var token = tokensStack.pop();
 	if (match) {
 		token.inlineAttributes = token.inlineAttributes || [];
@@ -307,16 +288,16 @@ customRenderer.listitem = function(text) {
 };
 customRenderer.paragraph = function(text) {
 	var htmlString = marked.Renderer.prototype.paragraph.call(this, text);
-	var dom = htmlToDom(htmlString);
+	var dom = common.htmlToDom(htmlString);
 	applySpanAttributes(dom);
-	htmlString = domToHtml(dom);
+	htmlString = common.domToHtml(dom);
 	return applyToken(htmlString, tokensStack.pop());
 };
 customRenderer.table = function(header, body) {
 	var htmlString = marked.Renderer.prototype.table.call(this, header, body);
-	var dom = htmlToDom(htmlString);
+	var dom = common.htmlToDom(htmlString);
 	applySpanAttributes(dom);
-	htmlString = domToHtml(dom);
+	htmlString = common.domToHtml(dom);
 	return applyToken(htmlString, tokensStack.pop());
 };
 //customRenderer.tablerow = function(content) {
@@ -355,9 +336,9 @@ customRenderer.link = function(href, title, text) {
 		tocBuilder.link(href, title, text);
 	}
 	var htmlString = marked.Renderer.prototype.link.call(this, href, title, text);
-//	var dom = htmlToDom(htmlString);
+//	var dom = common.htmlToDom(htmlString);
 //	applySpanAttributes(dom);
-//	return domToHtml(dom);
+//	return common.domToHtml(dom);
 	return htmlString;
 };
 //customRenderer.image = function(href, title, text) {
@@ -404,7 +385,7 @@ function applyToken(htmlString, token) {
 		endsWithNL = "\n";
 	}
 
-	var root = htmlToDom(htmlString);
+	var root = common.htmlToDom(htmlString);
 	if (token.inlineAttributes) {
 		var attributes = computeAttributes(token.inlineAttributes);
 		var keys = Object.keys(attributes);
@@ -412,7 +393,7 @@ function applyToken(htmlString, token) {
 			root.attribs[current] = attributes[current];
 		});
 	}
-	return domToHtml(root) + (endsWithNL || "");
+	return common.domToHtml(root) + (endsWithNL || "");
 }
 
 function computeAttributes(inlineAttributes) {

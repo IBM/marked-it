@@ -13,6 +13,8 @@ var path = require("path");
 var htmlGenerator = require("./libs/htmlGenerator");
 var mdTOCGenerator = require("./libs/mdTOCGenerator");
 var ditamapGenerator = require("./libs/ditamapGenerator");
+var pdfGenerator = require("./libs/pdfGenerator");
+var common = require("./libs/common");
 
 var EXTENSION_DITAMAP = ".ditamap";
 var EXTENSION_HTML = ".html";
@@ -41,7 +43,6 @@ var headerFile, headerText;
 var footerFile, footerText;
 var pdfSettingsFile, pdfSettings;
 var conrefFile, conrefMap;
-var wkHtmlToPdf;
 var pdfQueue = [];
 
 var switchCounter = 0;
@@ -103,7 +104,7 @@ if (headerFile) {
 	}
 	
 	if (fd) {
-		headerText = readFile(fd);
+		headerText = common.readFile(fd);
 		fs.close(fd);
 	}
 }
@@ -117,13 +118,12 @@ if (footerFile) {
 	}
 	
 	if (fd) {
-		footerText = readFile(fd);
+		footerText = common.readFile(fd);
 		fs.close(fd);
 	}
 }
 
 if (pdfSettingsFile) {
-	wkHtmlToPdf = require('wkhtmltopdf');
 	fd = null;
 	try {
 		fd = fs.openSync(pdfSettingsFile, "r");
@@ -133,21 +133,20 @@ if (pdfSettingsFile) {
 
 	if (fd) {
 		try {
-			pdfSettings = JSON.parse(readFile(fd));
+			pdfSettings = JSON.parse(common.readFile(fd));
 		} catch (e) {
 			console.log("*** Failed to parse pdf settings file " + pdfSettingsFile + ", will use default pdf generation settings.\n" + e.toString());
 		}
 		fs.close(fd);
 	}
+	
+	pdfSettings = pdfSettings || DEFAULT_PDFSETTINGS;
 }
 
 if (conrefFile) {
 	var read = require("read-yaml");
 	conrefMap = read.sync(conrefFile);
 }
-
-var writeStat = fs.statSync(destinationDir);
-var writeBlockSize = writeStat.blksize || 4096;
 
 function traverse_tree(source, destination) {
 	var filenames = fs.readdirSync(source);
@@ -181,7 +180,7 @@ function traverse_tree(source, destination) {
 					continue;
 				}
 				
-				var fileText = readFile(readFd);
+				var fileText = common.readFile(readFd);
 				fs.close(readFd);
 				if (!fileText) {
 					console.log("*** Failed to read " + sourcePath);
@@ -217,7 +216,7 @@ function traverse_tree(source, destination) {
 					console.log("*** Failed to open file to write: " + destinationPath + "\n" + e.toString());
 					continue;
 				}
-				var success = writeFile(writeHTMLFd, new Buffer(htmlOutput));
+				var success = common.writeFile(writeHTMLFd, new Buffer(htmlOutput));
 				fs.close(writeHTMLFd);
 				if (!success) {
 					console.log("*** Failed to write: " + destinationPath);
@@ -226,7 +225,7 @@ function traverse_tree(source, destination) {
 				
 				console.log("--> Wrote: " + destinationPath);
 
-				if (wkHtmlToPdf) {
+				if (pdfSettings) {
 					generatePDF(fs.realpathSync(destinationPath));
 				}
 
@@ -244,7 +243,7 @@ function traverse_tree(source, destination) {
 						continue;
 					}
 
-					var success = writeFile(writeTOCFd, new Buffer(mdTOC));
+					success = common.writeFile(writeTOCFd, new Buffer(mdTOC));
 					fs.close(writeTOCFd);
 					if (!success) {
 						console.log("*** Failed to write: " + tocFilename);
@@ -272,7 +271,7 @@ function traverse_tree(source, destination) {
 						continue;
 					}
 
-					success = writeFile(writeDitamapFd, new Buffer(ditamap));
+					success = common.writeFile(writeDitamapFd, new Buffer(ditamap));
 					fs.close(writeDitamapFd);
 					if (!success) {
 						console.log("*** Failed to write: " + ditamapFilename);
@@ -287,7 +286,7 @@ function traverse_tree(source, destination) {
 						continue;
 					}
 					
-					success = writeFile(writeHtmlTOCFd, new Buffer(htmlTOC));
+					success = common.writeFile(writeHtmlTOCFd, new Buffer(htmlTOC));
 					fs.close(writeHtmlTOCFd);
 					if (!success) {
 						console.log("*** Failed to write: " + htmlTOCFilename);
@@ -324,42 +323,6 @@ function traverse_tree(source, destination) {
 console.log("");
 traverse_tree(sourceDir, destinationDir);
 done();
-
-function readFile(fd) {
-	var readStat = fs.fstatSync(fd);
-	var readBlockSize = readStat.blksize || 4096;
-	var fileSize = readStat.size;
-	if (!fileSize) {
-		return "";
-	}
-	var inBuffer = new Buffer(fileSize);
-	var totalReadCount = 0;
-	do {
-		var length = Math.min(readBlockSize, fileSize - totalReadCount);
-		var readCount = fs.readSync(fd, inBuffer, totalReadCount, length, null);
-		if (!readCount) {
-			break;
-		}
-		totalReadCount += readCount;
-	} while (totalReadCount < fileSize);
-	if (totalReadCount !== fileSize) {
-		return null;
-	}
-	return inBuffer.toString("utf8", 0, inBuffer.length);
-}
-
-function writeFile(fd, buffer) {
-	var totalWriteCount = 0;
-	do {
-		var length = Math.min(writeBlockSize, buffer.length - totalWriteCount);
-		var writeCount = fs.writeSync(fd, buffer, totalWriteCount, length, null);
-		if (!writeCount) {
-			return false;
-		}
-		totalWriteCount += writeCount;
-	} while (totalWriteCount < buffer.length);
-	return true;
-}
 
 function replaceVariables(text) { /* conref variables */
 	var VAR_OPEN = "{{";
@@ -429,21 +392,7 @@ function done() {
 
 		var htmlPath = pdfQueue.splice(0, 1)[0];
 		var pdfPath = htmlPath.replace(EXTENSION_HTML_REGEX, EXTENSION_PDF);
-		var pdfStream = null;
-		try {
-			pdfStream = fs.createWriteStream(pdfPath, {flags: overwrite ? "w" : "wx"});
-		} catch (e) {
-			console.log("*** Failed to open file to write: " + pdfPath + "\n" + e.toString());
-		};
-
-		if (pdfStream) {
-			try {
-				wkHtmlToPdf("file:///" + htmlPath, pdfSettings || DEFAULT_PDFSETTINGS).pipe(pdfStream);
-				console.log("--> Wrote: " + pdfPath);
-			} catch (e) {
-				console.log("*** Failed to generate .pdf output for " + pdfPath + ": " + e);
-			}
-		}
+		pdfGenerator.generate(htmlPath, pdfPath, overwrite, pdfSettings);
 		setTimeout(fn, TIMEOUT_PDF);
 	};
 	setTimeout(fn, TIMEOUT_PDF);
