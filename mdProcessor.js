@@ -395,5 +395,15 @@ function done() {
 		pdfGenerator.generate(htmlPath, pdfPath, overwrite, pdfSettings);
 		setTimeout(fn, TIMEOUT_PDF);
 	};
-	setTimeout(fn, TIMEOUT_PDF);
+
+	if (pdfQueue.length) {
+		var child_process = require('child_process');
+		child_process.execFile("wkhtmltopdf", ["-V"], function(err, stdout, stderr) {
+			if (err) {
+				console.log("*** Failed to launch wkhtmltopdf, its path is likely not included in your native PATH environment variable.  PDFs are not being generated.  Error: " + err.toString());	
+			} else {
+				setTimeout(fn, TIMEOUT_PDF);
+			}
+		});
+	}
 }
