@@ -418,23 +418,34 @@ function done() {
 
 function outputHelpPage() {
 	console.log("\n\nUsage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [OPTIONS]");
-	console.log("\nOptions:");
-	console.log("\t" + SWITCH_OVERWRITE + "\t\t\t\tOverwrite output files that already exist");
-	console.log("\t" + SWITCH_ATTRIBUTES + "\t\t\tDisable processing of Kramdown-style attribute lists");
-	console.log("\t" + SWITCH_PDF + "\t\t\t\tDo not generate .pdf files");
-	console.log("\t" + SWITCH_TOC + "\t\t\t\tDo not generate Table of Contents files");
-	console.log("\t" + SWITCH_HEADERFILE + "=<headerSourceFile>\t\tPath to file with content to be prepended to generated .html");
-	console.log("\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>\t\tPath to file with content to be appended to generated .html");
-	console.log("\t" + SWITCH_PDFSETTINGSFILE + "=<pdfSettingsFile>\tPath to file with PDF generation settings");
-	console.log("\t" + SWITCH_CONREFFILE + "=<conrefFile>\t\tPath to file containing Jekyll-style variable definitions");
-	console.log("\nPDF Generation");
-	console.log("\tPDF file generation is attempted by default.  For it to succeed wkhtmltopdf must be installed, and the");
-	console.log("\tpath of its binary must be in the OS' PATH environment variable.  For info and available downloads see");
-	console.log("\t<http://wkhtmltopdf.org/>.")
-	console.log("\tNote that on Windows the wkhtmltopdf arch (32-/64-bit) should match that of the node.js being used.");
-	console.log("\n\tIf " + SWITCH_PDFSETTINGSFILE + " is not specified then all default settings are used.");
-	console.log("\tCustom settings are specified in strict JSON format as camel-based equivalents of the settings described");
-	console.log("\tat <http://wkhtmltopdf.org/usage/wkhtmltopdf.txt>.  For an example see the included \"examplePDFsettings\"");
-	console.log("\tfile.");
-	console.log("\nContact:\n\tTo report bugs or request features visit <https://hub.jazz.net/project/ggayed/markdownProcessor/overview>.");
+	console.log("\nOptions:\n");
+	console.log(SWITCH_OVERWRITE);
+	console.log("\tOverwrite output files that already exist");
+	console.log(SWITCH_ATTRIBUTES);
+	console.log("\tDisable processing of Kramdown-style attribute lists");
+	console.log(SWITCH_PDF);
+	console.log("\tDo not generate .pdf files");
+	console.log(SWITCH_TOC);
+	console.log("\tDo not generate Table of Contents files");
+	console.log(SWITCH_HEADERFILE + "=<headerSourceFile>");
+	console.log("\tPath to file with content to be prepended to generated .html");
+	console.log(SWITCH_FOOTERFILE + "=<footerSourceFile>");
+	console.log("\tPath to file with content to be appended to generated .html");
+	console.log(SWITCH_PDFSETTINGSFILE + "=<pdfSettingsFile>");
+	console.log("\tPath to file with PDF generation settings");
+	console.log(SWITCH_CONREFFILE + "=<conrefFile>");
+	console.log("\tPath to file containing Jekyll-style variable definitions");
+	console.log("\n\nPDF Generation\n");
+	console.log("PDF file generation is attempted by default.  For it to succeed wkhtmltopdf");
+	console.log("must be installed, and the path to its binary must be in the OS' PATH");
+	console.log("environment variable.  For wkhtmltopdf info and available downloads see");
+	console.log("<http://wkhtmltopdf.org/>.  Note that on Windows the wkhtmltopdf")
+	console.log("arch (32-/64-bit) should match that of the node.js being used.");
+	console.log("\nIf " + SWITCH_PDFSETTINGSFILE + " is not specified then all default settings");
+	console.log("are used.  Custom settings are specified in strict JSON format as the");
+	console.log("camel-based equivalents of the settings described at");
+	console.log("<http://wkhtmltopdf.org/usage/wkhtmltopdf.txt>.  For an example see the")
+	console.log("included \"examplePDFsettings\" file.");
+	console.log("\n\nContact:\n\nTo report bugs or request features visit");
+	console.log("<https://hub.jazz.net/project/ggayed/markdownProcessor/overview>.\n");
 }
