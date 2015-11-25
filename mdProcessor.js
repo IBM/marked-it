@@ -29,19 +29,20 @@ var SWITCH_DESTDIR = "--destDir";
 var SWITCH_BASEURL = "--baseURL";
 var SWITCH_OVERWRITE = "-overwrite";
 var SWITCH_ATTRIBUTES = "-disableAttributes";
+var SWITCH_PDF = "-disablePDF";
 var SWITCH_TOC = "-disableTOC";
 var SWITCH_PDFSETTINGSFILE = "--pdfSettingsFile";
 var SWITCH_HEADERFILE = "--headerFile";
 var SWITCH_FOOTERFILE = "--footerFile";
 var SWITCH_CONREFFILE = "--conrefFile";
 var COPY_EXTENSIONS = [EXTENSION_HTML, EXTENSION_PDF, ".css", ".bmp", ".jpg", ".png", ".gif", ".svg", ".js", ".txt", ".xml", ".json"];
-var DEFAULT_PDFSETTINGS = {pageSize: 'Letter'}; // TODO define a more complete defaults object
+var DEFAULT_PDFSETTINGS = {};
 var TIMEOUT_PDF = 1000;
 
-var sourceDir, destinationDir, baseURL, overwrite, disableAttributes, disablePDF, disableTOC
+var sourceDir, destinationDir, baseURL, overwrite, disableAttributes, disableTOC;
 var headerFile, headerText;
 var footerFile, footerText;
-var pdfSettingsFile, pdfSettings;
+var disablePDF, pdfSettingsFile, pdfSettings;
 var conrefFile, conrefMap;
 var pdfQueue = [];
 
@@ -60,6 +61,10 @@ process.argv.forEach(function(arg) {
 		disableAttributes = true;
 	} else if (arg.indexOf(SWITCH_TOC) === 0) {
 		disableTOC = true;
+	} else if (arg.indexOf(SWITCH_PDF) === 0) {
+		disablePDF = true;
+	} else if (arg.indexOf(SWITCH_PDFSETTINGSFILE) === 0 && arg.indexOf("=") !== -1) {
+		pdfSettingsFile = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_HEADERFILE) === 0 && arg.indexOf("=") !== -1) {
 		headerFile = arg.substring(arg.indexOf("=") + 1);
 	} else if (arg.indexOf(SWITCH_FOOTERFILE) === 0 && arg.indexOf("=") !== -1) {
@@ -77,7 +82,7 @@ process.argv.forEach(function(arg) {
 });
 
 if (!sourceDir || !destinationDir) {
-	console.log("\nUsage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [" + "\n\t\t" + SWITCH_OVERWRITE + "\n\t\t" + SWITCH_ATTRIBUTES + "\n\t\t" + SWITCH_TOC + "\n\t\t" + SWITCH_HEADERFILE + "=<headerSourceFile>" + "\n\t\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>" + "\n\t]");
+	outputHelpPage();
 	process.exit();
 }
 
@@ -123,23 +128,26 @@ if (footerFile) {
 	}
 }
 
-if (pdfSettingsFile) {
-	fd = null;
-	try {
-		fd = fs.openSync(pdfSettingsFile, "r");
-	} catch (e) {
-		console.log("*** Failed to open file to read " + pdfSettingsFile + ", will use default pdf generation settings.\n" + (e.code === "ENOENT" ? "" : e.toString()));
+if (!disablePDF) {
+	if (pdfSettingsFile) {
+		fd = null;
+		try {
+			fd = fs.openSync(pdfSettingsFile, "r");
+		} catch (e) {
+			console.log("*** Failed to open file to read " + pdfSettingsFile + ", will use default pdf generation settings.\n" + (e.code === "ENOENT" ? "" : e.toString()));
+		}
+
+		if (fd) {
+			try {
+				var content = common.readFile(fd);
+				pdfSettings = JSON.parse(content);
+			} catch (e) {
+				console.log("*** Failed to parse pdf settings file " + pdfSettingsFile + ", will use default pdf generation settings.\n" + e.toString());
+			}
+			fs.close(fd);
+		}
 	}
 
-	if (fd) {
-		try {
-			pdfSettings = JSON.parse(common.readFile(fd));
-		} catch (e) {
-			console.log("*** Failed to parse pdf settings file " + pdfSettingsFile + ", will use default pdf generation settings.\n" + e.toString());
-		}
-		fs.close(fd);
-	}
-	
 	pdfSettings = pdfSettings || DEFAULT_PDFSETTINGS;
 }
 
@@ -400,10 +408,33 @@ function done() {
 		var child_process = require('child_process');
 		child_process.execFile("wkhtmltopdf", ["-V"], function(err, stdout, stderr) {
 			if (err) {
-				console.log("*** Failed to launch wkhtmltopdf, its path is likely not included in your native PATH environment variable.  PDFs are not being generated.  Error: " + err.toString());	
+				console.log("*** Could not locate wkhtmltopdf, so PDFs are not being generated.  The path to its binary is likely not included in your native PATH environment variable.  Error: " + err.toString());	
 			} else {
 				setTimeout(fn, TIMEOUT_PDF);
 			}
 		});
 	}
+}
+
+function outputHelpPage() {
+	console.log("\n\nUsage:\n\tnode mdProcessor " + SWITCH_SOURCEDIR + "=<sourceDirectory> " + SWITCH_DESTDIR + "=<destinationDirectory> [OPTIONS]");
+	console.log("\nOptions:");
+	console.log("\t" + SWITCH_OVERWRITE + "\t\t\t\tOverwrite output files that already exist");
+	console.log("\t" + SWITCH_ATTRIBUTES + "\t\t\tDisable processing of Kramdown-style attribute lists");
+	console.log("\t" + SWITCH_PDF + "\t\t\t\tDo not generate .pdf files");
+	console.log("\t" + SWITCH_TOC + "\t\t\t\tDo not generate Table of Contents files");
+	console.log("\t" + SWITCH_HEADERFILE + "=<headerSourceFile>\t\tPath to file with content to be prepended to generated .html");
+	console.log("\t" + SWITCH_FOOTERFILE + "=<footerSourceFile>\t\tPath to file with content to be appended to generated .html");
+	console.log("\t" + SWITCH_PDFSETTINGSFILE + "=<pdfSettingsFile>\tPath to file with PDF generation settings");
+	console.log("\t" + SWITCH_CONREFFILE + "=<conrefFile>\t\tPath to file containing Jekyll-style variable definitions");
+	console.log("\nPDF Generation");
+	console.log("\tPDF file generation is attempted by default.  For it to succeed wkhtmltopdf must be installed, and the");
+	console.log("\tpath of its binary must be in the OS' PATH environment variable.  For info and available downloads see");
+	console.log("\t<http://wkhtmltopdf.org/>.")
+	console.log("\tNote that on Windows the wkhtmltopdf arch (32-/64-bit) should match that of the node.js being used.");
+	console.log("\n\tIf " + SWITCH_PDFSETTINGSFILE + " is not specified then all default settings are used.");
+	console.log("\tCustom settings are specified in strict JSON format as camel-based equivalents of the settings described");
+	console.log("\tat <http://wkhtmltopdf.org/usage/wkhtmltopdf.txt>.  For an example see the included \"examplePDFsettings\"");
+	console.log("\tfile.");
+	console.log("\nContact:\n\tTo report bugs or request features visit <https://hub.jazz.net/project/ggayed/markdownProcessor/overview>.");
 }
