@@ -41,7 +41,9 @@ function readFile(fd) {
 	if (totalReadCount !== fileSize) {
 		return null;
 	}
-	return inBuffer.toString("utf8", 0, inBuffer.length);
+	var result = inBuffer.toString("utf8", 0, inBuffer.length);
+	result = result.replace(/^\uFEFF/, ""); /* strip contained BOM characters */
+	return result;
 }
 
 function writeFile(fd, buffer) {
