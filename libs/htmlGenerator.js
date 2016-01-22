@@ -386,6 +386,14 @@ function applyToken(htmlString, token) {
 	}
 
 	var root = common.htmlToDom(htmlString);
+	if (!root.attribs) {
+		/*
+		 * This is the case for source strings that don't generate tags,
+		 * such as HTML comment blocks. Just return the original html string.
+		 */
+		return htmlString;
+	}
+
 	if (token.inlineAttributes) {
 		var attributes = computeAttributes(token.inlineAttributes);
 		var keys = Object.keys(attributes);
