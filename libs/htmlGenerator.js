@@ -515,6 +515,7 @@ var _TYPEID_LISTITEM = "markup.list.item.markdown";
 var _TYPEID_PARAGRAPH = "markup.other.paragraph.markdown";
 var _atxDetectRegex = /[>\s]*#/g;
 var _blockquoteStartRegex = /[ \t]*>[ \t]?/g;
+var _fencedCodeBlockRegex = /```/g;
 var _hrRegex = /([ \t]*[-*_]){3,}/g;
 var _newlineRegex = /\r\n|\r|\n/g;
 var _spacesAndTabsRegex = /[ \t]*/g;
@@ -534,6 +535,13 @@ function advanceIndex(text, token, index) {
 				index = text.indexOf(current, index) + current.length;
 			}
 		});
+
+		if (token.type === "code" && token.hasOwnProperty("lang")) { //$NON-NLS-1$ //$NON-NLS-0$
+			/* a gfm fenced code block, need to claim more characters */
+			_fencedCodeBlockRegex.lastIndex = index;
+			var match = _fencedCodeBlockRegex.exec(text);
+			index = match.index + match[0].length;
+		}
 	} else if (token.type === "blockquote_start") { //$NON-NLS-0$
 		_blockquoteStartRegex.lastIndex = index;
 		var match = _blockquoteStartRegex.exec(text);
