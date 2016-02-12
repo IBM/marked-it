@@ -10,6 +10,7 @@ var enableAttributes;
 
 var blockAttributeRegex = /(^|(?:\r\n|\r|\n))(([ \t>]*)(\{:(?:\\\}|[^\}])*\})[ \t]*(?:\r\n|\r|\n))/g;
 var spanAttributeRegex = /\{:((?:\\\}|[^\}])*)\}/;
+var listItemAttributeRegex = /\s\{:((?:\\\}|[^\}])*)\}\s*$/;
 var headerIALRegex = /[ \t]+\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
 var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
 
@@ -354,16 +355,33 @@ function applySpanAttributes(node) {
 		if (child.type === "text") {
 			var childText = domUtils.getText(child);
 			var match = spanAttributeRegex.exec(childText);
-			if (match && !match.index) {
-				var previousSibling = child.prev;
-				if (previousSibling) {
-					child.data = childText.substring(match[0].length);
-					var attributes = computeAttributes([match[1].trim()]);
-					var keys = Object.keys(attributes);
-					keys.forEach(function(current) {
-						previousSibling.attribs[current] = attributes[current];
-					});
-					i--; /* decrement so that the current child will be tried again */
+			if (match) {
+				if (i === 0 && node.name === "li") {
+					/* check if this is a case of a list item attribute */
+					var liMatch = listItemAttributeRegex.exec(childText);
+					if (liMatch) {
+						child.data = childText.substring(0, liMatch.index);
+						var attributes = computeAttributes([liMatch[1].trim()]);
+						var keys = Object.keys(attributes);
+						keys.forEach(function(current) {
+							node.attribs[current] = attributes[current];
+						});
+						i--; /* decrement so that the current child will be tried again */
+						match = null; /* don't try to handle this match again */
+					}
+				}
+
+				if (match && match.index === 0) {
+					var previousSibling = child.prev;
+					if (previousSibling) {
+						child.data = childText.substring(match[0].length);
+						var attributes = computeAttributes([match[1].trim()]);
+						var keys = Object.keys(attributes);
+						keys.forEach(function(current) {
+							previousSibling.attribs[current] = attributes[current];
+						});
+						i--; /* decrement so that the current child will be tried again */
+					}
 				}
 			}
 		}
@@ -386,14 +404,6 @@ function applyToken(htmlString, token) {
 	}
 
 	var root = common.htmlToDom(htmlString);
-	if (!root.attribs) {
-		/*
-		 * This is the case for source strings that don't generate tags,
-		 * such as HTML comment blocks. Just return the original html string.
-		 */
-		return htmlString;
-	}
-
 	if (token.inlineAttributes) {
 		var attributes = computeAttributes(token.inlineAttributes);
 		var keys = Object.keys(attributes);
