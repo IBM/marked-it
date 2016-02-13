@@ -271,18 +271,20 @@ customRenderer.list = function(body, ordered) {
 	return applyToken(result, tokensStack.pop());
 };
 customRenderer.listitem = function(text) {
+	var inlineAttributes = []
 	var match = listItemIALRegex.exec(text);
-	if (match) {
+	while (match) {
+		inlineAttributes.push(match[1].trim());
 		text = text.substring(match[0].length).trim();
+		match = listItemIALRegex.exec(text);
 	}
 	var htmlString = marked.Renderer.prototype.listitem.call(this, text);
 	var dom = common.htmlToDom(htmlString);
 	applySpanAttributes(dom);
 	htmlString = common.domToHtml(dom);
 	var token = tokensStack.pop();
-	if (match) {
-		token.inlineAttributes = token.inlineAttributes || [];
-		token.inlineAttributes.push(match[1].trim());
+	if (inlineAttributes.length) {
+		token.inlineAttributes = (token.inlineAttributes || []).concat(inlineAttributes);
 	}
 	return applyToken(htmlString, token);
 };
