@@ -11,7 +11,7 @@ var enableAttributes;
 var blockAttributeRegex = /(^|(?:\r\n|\r|\n))(([ \t>]*)(\{:(?:\\\}|[^\}])*\})[ \t]*(?:\r\n|\r|\n))/g;
 var spanAttributeRegex = /\{:((?:\\\}|[^\}])*)\}/;
 var headerIALRegex = /[ \t]+\{:((?:\\\}|[^\}])*)\}[ \t]*$/;
-var listItemIALRegex = /^(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
+var listItemIALRegex = /^(<p>)?(?:[ \t>]*)\{:((?:\\\}|[^\}])*)\}/;
 
 var kindOfRegex = /elementKind=(['"])([^\1]+?)\1/; /* remove when elementKind support is dropped */
 
@@ -274,8 +274,8 @@ customRenderer.listitem = function(text) {
 	var inlineAttributes = []
 	var match = listItemIALRegex.exec(text);
 	while (match) {
-		inlineAttributes.push(match[1].trim());
-		text = text.substring(match[0].length).trim();
+		inlineAttributes.push(match[2].trim());
+		text = (match[1] ? text.substring(0, match[1].length) : "") + text.substring(match[0].length).trim();
 		match = listItemIALRegex.exec(text);
 	}
 	var htmlString = marked.Renderer.prototype.listitem.call(this, text);
