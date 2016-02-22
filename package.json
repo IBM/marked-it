@@ -1,23 +1,28 @@
 {
-  "name": "mdProcessor",
-  "version": "0.0.2",
-  "private": true,
-  "description": "reads markdown files from a directory and uses the 'marked' module to generate the corresponding .html files",
-  "main": "mdProcessor.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://hub.jazz.net/git/ggayed/markdownProcessor"
-  },
-  "keywords": ["markdown", "marked", "html"],
-  "dependencies": {
-    "marked": "0.3.2",
-    "htmlparser2": "3.8.3",
-    "wkhtmltopdf": "0.1.5",
-    "read-yaml": "^1.0.0"},
-  "devDependencies": {"mocha": "2.2.5"},
-  "author": "Grant Gayed",
-  "license": "Eclipse Public License v1.0"
+	"name": "marked-it",
+	"description": "A marked-based parser with support for Kramdown attributes syntax and generation of dita map and html TOCs",
+	"version": "0.1.0",
+	"author": "Grant Gayed <grant_gayed@ca.ibm.com>",
+	"license": "EPL-1.0",
+	"homepage": "https://github.com/grant-g/marked-it",
+	"bugs": "https://github.com/grant-g/marked-it/issues",
+	"keywords": ["markdown", "marked", "kramdown", "html", "dita-map"],
+
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/grant-g/marked-it.git"
+	},
+
+	"main": "./marked-it.js",
+	"directories": {
+		"lib": "./lib"
+	},
+	"scripts": {
+		"test": "node_modules/mocha/bin/mocha test/test.js"
+	},
+	"dependencies": {
+		"marked": "0.3.2",
+		"htmlparser2": "3.8.3"
+	},
+	"devDependencies": {"mocha": "2.2.5"}
 }
