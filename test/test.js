@@ -23,7 +23,7 @@ describe('markdownProcessor tests', function() {
 
     describe('testADL', function() {
     	it('doit', function() {
-	    	var fd = fs.openSync('tests/test_ADL.md', "r");
+	    	var fd = fs.openSync('test/test_ADL.md', "r");
 	    	var mdText = readFile(fd);
 	    	fs.close(fd);
 	
@@ -31,7 +31,7 @@ describe('markdownProcessor tests', function() {
 	    	if (OUTPUT_GENERATED_HTML) {
 	    		console.log("-------------------------------\n" + resultText);
 	    	} else {
-	        	fd = fs.openSync('tests/expectedResult_ADL.html', "r");
+	        	fd = fs.openSync('test/expectedResult_ADL.html', "r");
 	        	var expectedText = readFile(fd);
 	        	fs.close(fd);
 	    		assert.strictEqual(resultText, expectedText);

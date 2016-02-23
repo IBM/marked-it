@@ -16,7 +16,7 @@
 	"main": "lib/marked-it.js",
 	"files": ["lib/"],
 	"scripts": {
-		"test": "node_modules/mocha/bin/mocha test/test.js"
+		"test": "mocha test/test.js"
 	},
 	"dependencies": {
 		"marked": "0.3.2",
