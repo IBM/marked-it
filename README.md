@@ -1,5 +1,7 @@
 # marked-it
 
+## A [marked](https://github.com/chjj/marked "marked Git repo")-backed Markdown parser that adds support for Kramdown attributes syntax, and generation of Dita map TOC files.
+
 For info on Kramdown attributes syntax see [Attribute List Definitions](http://kramdown.gettalong.org/syntax.html#attribute-list-definitions "Attribute List Definitions") and [Inline Attribute Lists](http://kramdown.gettalong.org/syntax.html#inline-attribute-lists "Inline Attribute Lists").
 
 ## Install
