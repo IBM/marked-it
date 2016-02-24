@@ -41,7 +41,7 @@ console.log("Dita map:\n" + result.ditamap.text);
 */
 ```
 
-## marked-it.generate(mardownText [,options])
+## marked-it.generate(markdownText [,options])
 
 ### options (default values shown)
 ```js
