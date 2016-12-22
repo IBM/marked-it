@@ -1,6 +1,6 @@
 {
 	"name": "marked-it",
-	"description": "A marked-backed Markdown parser that adds support for Kramdown attributes syntax, and generation of Dita map TOC files.",
+	"description": "A marked-backed Markdown parser that adds support for Kramdown attributes syntax and generation of TOC files.",
 	"version": "0.0.2",
 	"author": "Grant Gayed <grant_gayed@ca.ibm.com>",
 	"license": "EPL-1.0",
