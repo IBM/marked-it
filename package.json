@@ -1,29 +1,40 @@
 {
-	"name": "marked-it",
-	"description": "A marked-backed Markdown parser that adds support for Kramdown attributes syntax and generation of TOC files.",
-	"version": "0.0.2",
-	"author": "Grant Gayed <grant_gayed@ca.ibm.com>",
-	"license": "EPL-1.0",
-	"homepage": "https://github.com/grant-g/marked-it",
-	"bugs": "https://github.com/grant-g/marked-it/issues",
-	"keywords": ["markdown", "marked", "kramdown", "html", "dita-map"],
-
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/grant-g/marked-it.git"
-	},
-
-	"main": "lib/marked-it.js",
-	"files": ["lib/"],
-	"scripts": {
-		"test": "mocha test/test.js"
-	},
-	"dependencies": {
-		"marked": "0.3.2",
-		"htmlparser2": "3.8.3",
-		"js-yaml": "3.5.3"
-	},
-	"devDependencies": {
-		"mocha": "2.2.5"
-	}
+  "name": "@markedit/marked-it",
+  "description": "A marked-backed Markdown parser that adds support for attributes syntax, extensions, and TOC generation.",
+  "version": "0.5.0",
+  "author": "Grant Gayed <grant_gayed@ca.ibm.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/grant-g/marked-it",
+  "bugs": {
+    "url": "https://github.com/grant-g/marked-it/issues"
+  },
+  "keywords": [
+    "markdown",
+    "marked",
+    "kramdown",
+    "html",
+    "dita"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grant-g/marked-it.git"
+  },
+  "main": "lib/marked-it.js",
+  "files": [
+    "lib/"
+  ],
+  "scripts": {
+    "test": "mocha test/test.js"
+  },
+  "dependencies": {
+    "marked": "0.3.2",
+    "htmlparser2": "3.8.3",
+    "js-yaml": "3.5.3"
+  },
+  "devDependencies": {
+    "mocha": "2.2.5"
+  },
+  "directories": {
+    "test": "test"
+  }
 }
