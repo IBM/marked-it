@@ -1,7 +1,7 @@
 {
-  "name": "@marked-it/marked-it",
+  "name": "@markedit/marked-it",
   "description": "A marked-backed Markdown parser that adds support for attributes syntax, extensions, and TOC generation.",
-  "version": "0.6.0",
+  "version": "0.5.0",
   "author": "Grant Gayed <grant_gayed@ca.ibm.com>",
   "license": "MIT",
   "homepage": "https://github.com/grant-g/marked-it",
