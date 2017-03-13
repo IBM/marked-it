@@ -3,7 +3,7 @@
 	"description": "A marked-backed Markdown parser that adds support for Kramdown attributes syntax and generation of TOC files.",
 	"version": "0.0.2",
 	"author": "Grant Gayed <grant_gayed@ca.ibm.com>",
-	"license": "EPL-1.0",
+	"license": "MIT",
 	"homepage": "https://github.com/grant-g/marked-it",
 	"bugs": "https://github.com/grant-g/marked-it/issues",
 	"keywords": ["markdown", "marked", "kramdown", "html", "dita-map"],
