@@ -1,12 +1,12 @@
 {
 	"name": "marked-it",
-	"description": "A marked-backed Markdown parser that adds support for Kramdown attributes syntax and generation of TOC files.",
+	"description": "A Marked-backed Markdown->HTML generator.  Supports extended attribute and front matter syntaxes, and provides hooks for modifying the generated HTML.",
 	"version": "0.0.2",
 	"author": "Grant Gayed <grant_gayed@ca.ibm.com>",
 	"license": "MIT",
 	"homepage": "https://github.com/grant-g/marked-it",
 	"bugs": "https://github.com/grant-g/marked-it/issues",
-	"keywords": ["markdown", "marked", "kramdown", "html", "dita-map"],
+	"keywords": ["markdown", "html", "marked", "kramdown", "attributes", "front matter", "toc"],
 
 	"repository": {
 		"type": "git",
