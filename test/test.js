@@ -21,9 +21,7 @@
 
 var fs = require('fs');
 var assert = require('assert');
-var htmlGenerator = require('../lib/htmlGenerator');
-
-var OUTPUT_GENERATED_HTML = false;
+var markedIt = require('../lib/marked-it');
 
 describe('markdownProcessor tests', function() {
 
@@ -33,24 +31,139 @@ describe('markdownProcessor tests', function() {
     after(function() {});
 
     describe('testADL', function() {
+		var OUTPUT_GENERATED_HTML = false;
     	it('doit', function() {
 	    	var fd = fs.openSync('test/test_ADL.md', "r");
 	    	var mdText = readFile(fd);
 	    	fs.close(fd);
 	
-	    	var resultText = htmlGenerator.generate(mdText, true);
+	    	var result = markedIt.generate(mdText, {});
 	    	if (OUTPUT_GENERATED_HTML) {
-	    		console.log("-------------------------------\n" + resultText);
+	    		console.log("-------------------------------\n" + result.html.text);
 	    	} else {
 	        	fd = fs.openSync('test/expectedResult_ADL.html', "r");
 	        	var expectedText = readFile(fd);
 	        	fs.close(fd);
-	    		assert.strictEqual(resultText, expectedText);
+	    		assert.strictEqual(result.html.text, expectedText);
 	    	}
     	});
     });
-    
+
+    describe('testExtensions', function() {
+		var OUTPUT_GENERATED_HTML = false;
+    	it('doit', function() {
+	    	var fd = fs.openSync('test/test_extensions.md', "r");
+	    	var mdText = readFile(fd);
+	    	fs.close(fd);
+
+			function checkData(data) {
+				assert(data.htmlToDom && typeof data.htmlToDom === "function");
+				assert(data.domToHtml && typeof data.domToHtml === "function");
+				assert(data.domToInnerHtml && typeof data.domToInnerHtml === "function");
+				assert(data.domUtils && typeof data.domUtils === "object");
+			}
+
+			var extensions = {
+				html: {
+					onHeading: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)h(\\d)", "g"), "<$1header-repl$2");
+					},
+					onCode: function(source, data) {
+						checkData(data);
+						return source
+							.replace(new RegExp("<(/?)pre>", "g"), "<$1pre-repl>")
+							.replace(new RegExp("<(/?)code>", "g"), "<$1code-repl>");
+					},
+					onBlockquote: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)blockquote", "g"), "<$1blockquote-repl");
+					},
+					onHtml: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("([<>])", "g"), "$1$1$1");
+					},
+					onHr: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)hr", "g"), "<$1hr-repl");
+					},
+					onList: function(source, data) {
+						checkData(data);
+						return source
+							.replace(new RegExp("<(/?)ul", "g"), "<$1ul-repl")
+							.replace(new RegExp("<(/?)ol", "g"), "<$1ol-repl");
+					},
+					onListItem: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)li", "g"), "<$1li-repl");
+					},
+					onParagraph: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)p", "g"), "<$1p-repl");
+					},
+					onTable: function(source, data) {
+						checkData(data);
+						return source
+							.replace(new RegExp("<(/?)table", "g"), "<$1table-repl")
+							.replace(new RegExp("<(/?)thead", "g"), "<$1thead-repl")
+							.replace(new RegExp("<(/?)tbody", "g"), "<$1tbody-repl");
+					},
+					onTablerow: function(source, data) {
+						checkData(data);
+						return source
+							.replace(new RegExp("<(/?)tr", "g"), "<$1tr-repl")
+							.replace(new RegExp("<(/?)th", "g"), "<$1th-repl");
+					},
+					onTablecell: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)td", "g"), "<$1td-repl");
+					},
+					
+					onStrong: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)strong", "g"), "<$1strong-repl");
+					},
+					onEmphasis: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)em", "g"), "<$1em-repl");
+					},
+					onCodespan: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)code", "g"), "<$1code-repl");
+					},
+					onLinebreak: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)br", "g"), "<$1br-repl");
+					},
+					onDel: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)del", "g"), "<$1del-repl");
+					},
+					onLink: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)a", "g"), "<$1a-repl");
+					},
+					onImage: function(source, data) {
+						checkData(data);
+						return source.replace(new RegExp("<(/?)img", "g"), "<$1img-repl");
+					}
+				}
+			};
+			
+	    	var result = markedIt.generate(mdText, {extensions: extensions});
+	    	if (OUTPUT_GENERATED_HTML) {
+	    		console.log("-------------------------------\n" + result.html.text);
+	    	} else {
+	        	fd = fs.openSync('test/expectedResult_extensions.html', "r");
+	        	var expectedText = readFile(fd);
+	        	fs.close(fd);
+	    		assert.strictEqual(result.html.text, expectedText);
+	    	}
+    	});
+    });
+
 //    describe('testBlockIAL', function() {
+//		var OUTPUT_GENERATED_HTML = false;
 //    	var fd = fs.openSync('./test_block_IAL.md', "r");
 //    	var mdText = readFile(fd);
 //    	fs.close(fd);
@@ -67,6 +180,7 @@ describe('markdownProcessor tests', function() {
 //    });    
 //
 //    describe('testSpanIAL', function() {
+//		var OUTPUT_GENERATED_HTML = false;
 //    	var fd = fs.openSync('./test_span_IAL.md', "r");
 //    	var mdText = readFile(fd);
 //    	fs.close(fd);
@@ -83,6 +197,7 @@ describe('markdownProcessor tests', function() {
 //    });
     
 //    describe('testVariables', function() {
+//		var OUTPUT_GENERATED_HTML = false;
 //    	var fd = fs.openSync('./test_variables.md', "r");
 //    	var mdText = readFile(fd);
 //    	fs.close(fd);
