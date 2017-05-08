@@ -1,5 +1,5 @@
 {
-	"name": "marked-it",
+	"name": "marked-it-core",
 	"description": "A Marked-backed Markdown->HTML generator.  Supports extended attribute and front matter syntaxes, and provides hooks for modifying the generated HTML.",
 	"version": "0.8.0",
 	"author": "Grant Gayed <grant_gayed@ca.ibm.com>",
