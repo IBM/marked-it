@@ -5,13 +5,13 @@ A Marked-backed Markdown->HTML generator.  Supports extended attribute and front
 ## Install
 
 ``` bash
-npm install marked-it
+npm install marked-it-core
 ```
 
 ## Example Usage
 
 ```js
-var markedIt = require("marked-it");
+var markedIt = require("marked-it-core");
 var result = markedIt.generate("#Welcome to marked-it\n{: .title #welcomeId}\n", {filename: "example.html"});
 
 console.log("HTML:\n" + result.html.text);
