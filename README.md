@@ -35,7 +35,7 @@ console.log(result.html.text);
 	variablesMap: {},
 	
 	/* the following TOC generation options are subject to change */
-	generateToc: true,
+	tocJSON: false,
 	tocDepth: Infinity
 	filePath: ""
 }
@@ -140,6 +140,7 @@ This extension receives a *data* object containing:
 `domUtils`
 > An object with functions for manipulating DOM objects.  The functions are defined in the various files found [here](https://github.com/fb55/domutils/tree/master/lib).
 
-#### TOC Generation extension point
+#### TOC Generation extension points
 
-> *xml.toc.onTopic*
+	json.toc.onTopic
+	xml.toc.onTopic
