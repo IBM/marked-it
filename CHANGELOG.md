@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+##[0.10.2] 2018-08-13
+Bug fixes.
+
 ##[0.10.1] 2018-08-13
 Changes to support JSON-format TOC generation by marked-it-cli.
 
