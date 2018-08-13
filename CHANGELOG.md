@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+**[0.10.1] 2018-08-13**  
+Changes to support JSON-format TOC generation in marked-it-cli.
+
 **[0.10.0] 2018-08-02**  
 Support has been added for generating TOCs in JSON format.  To use this, specify option `tocJSON: true` when invoking `generate()`, and the JSON TOC output will be included in the result's `jsonToc` field.
 
