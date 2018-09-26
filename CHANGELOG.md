@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+##[0.10.3] 2018-09-26
+A generated document's title is now determined by the first `H1` or `H2` that's encountered.
+
 ##[0.10.2] 2018-08-13
 Bug fixes.
 
