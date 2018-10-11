@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+##[0.10.4] 2018-10-11
+Fixed path adjustment bug in JSON TOC adapter.
+
 ##[0.10.3] 2018-09-26
 A generated document's title is now determined by the first `H1` or `H2` that's encountered.
 
