@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+##[0.10.7] 2018-11-07
+Changes to support new generation of TOC links by marked-it-cli.
+
 ##[0.10.6] 2018-11-01
 Fix bug that was failing to substitute attribute values into root-level code blocks.
 
