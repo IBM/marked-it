@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+##[0.10.10] 2019-01-15
+Changes to support how 'id' attributes for TOC topics are computed by marked-it-cli.
+
 ##[0.10.8 and 0.10.9] 2018-11-20
 Changes to support the addition of 'id' attributes to TOC topics by marked-it-cli.
 
