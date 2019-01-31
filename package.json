@@ -6,25 +6,33 @@
 	"license": "MIT",
 	"homepage": "https://github.com/ibm/marked-it",
 	"bugs": "https://github.com/ibm/marked-it/issues",
-	"keywords": ["markdown", "html", "marked", "kramdown", "attributes", "front matter", "toc"],
-
+	"keywords": [
+		"markdown",
+		"html",
+		"marked",
+		"kramdown",
+		"attributes",
+		"front matter",
+		"toc"
+	],
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/IBM/marked-it.git"
 	},
-
 	"main": "lib/marked-it.js",
-	"files": ["lib/"],
+	"files": [
+		"lib/"
+	],
 	"scripts": {
 		"test": "mocha test/test.js"
 	},
 	"dependencies": {
-		"marked": "0.3.2",
+		"marked": "0.6.0",
 		"htmlparser2": "3.8.3",
 		"js-yaml": "3.5.3",
 		"pretty-data": "0.40.0"
 	},
 	"devDependencies": {
-		"mocha": "2.2.5"
+		"mocha": "^5.2.0"
 	}
 }
