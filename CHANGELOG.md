@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+##[0.10.11] 2019-02-08
+Fix to attribute detection to handle non-typical space characters.
+
 ##[0.10.10] 2019-01-15
 Changes to support how 'id' attributes for TOC topics are computed by marked-it-cli.
 
