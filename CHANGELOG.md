@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+##[0.11.0] 2019-02-13
+Bumped up to marked v0.3.9 and introduced option to auto-fix headers with invalid syntax.
+
 ##[0.10.11] 2019-02-08
 Fix to attribute detection to handle non-typical space characters.
 
