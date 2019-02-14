@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+##[0.11.1] 2019-02-14
+Bumped up the mocha dependency version.
+
 ##[0.11.0] 2019-02-13
 Bumped up to marked v0.3.9 and introduced option to auto-fix headers with invalid syntax.
 
