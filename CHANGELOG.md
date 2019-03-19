@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+##[0.12.0] 2019-03-19
+Fixed invocations of extensions for span-level elements.
+
 ##[0.11.1] 2019-02-14
 Bumped up the mocha dependency version.
 

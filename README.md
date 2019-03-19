@@ -28,7 +28,7 @@ console.log(result.html.text);
 #### *options* (default values shown)
 ```js
 {
-	extensions: [],
+	extensions: {},
 	markedOptions: {tables: true, gfm: true, headerPrefix: "", xhtml: true, langPrefix: "lang-"},
 	processAttributes: true,
 	processFrontMatter: true,
@@ -53,6 +53,10 @@ console.log(result.html.text);
 			title: <string>,
 			frontMatterMap: <object>
 		}
+	},
+	jsonToc: {
+		text: <string>,
+		errors: <array>
 	},
 	xmlToc: {
 		text: <string>,
@@ -110,7 +114,6 @@ All extensions in this section receive a *data* object containing:
 > *html.onStrong*  
 > *html.onEmphasis*  
 > *html.onCodespan*  
-> *html.onLinebreak*  
 > *html.onDel*  
 > *html.onLink*  
 > *html.onImage*  
