@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.13.1] 2019-03-27
+Released updated package-lock.json.
+
 ## [0.13.0] 2019-03-27
 Added `escape` and `unescape` functions to the data passed to many types of extensions.
 
