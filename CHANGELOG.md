@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.14.0] 2019-10-11
+Added support for generating footnotes that follow the syntax described at <https://www.markdownguide.org/extended-syntax/#footnotes>.
+
 ## [0.13.1] 2019-03-27
 Released updated package-lock.json.
 
