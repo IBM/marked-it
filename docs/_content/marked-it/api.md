@@ -91,7 +91,7 @@ Most of marked-it's extension points enable clients to override the HTML that is
 >> A function to convert a DOM object to its inner HTML string.  It takes the same *options* as the `domToHtml` function.
 
 >`domUtils`
->> An object with functions for manipulating DOM objects.  The functions are [defined in the various files](https://github.com/fb55/domutils/).
+>> An object with functions for manipulating DOM objects.  The functions are [defined in the various files](https://github.com/fb55/domutils/tree/master/src).
 
 The supported extension points are:
 
