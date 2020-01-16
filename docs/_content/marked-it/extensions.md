@@ -18,7 +18,7 @@ For an example of an extension that adds *<caption>* elements to generated *<tab
 All extensions in this section receive a *data* object containing:
 
 `htmlToDom(string, options)`
-> A function that returns the HTML string for a DOM object.  See [options](https://github.com/fb55/htmlparser2/).
+> A function that returns the HTML string for a DOM object.  See [options](https://github.com/fb55/htmlparser2/blob/f1aec5979f471d2dab416035b0dbcb1cace17ad5/src/Parser.ts#L102).
 
 `domToHtml(dom, options)`
 > A function that returns a DOM representation of an HTML string.
@@ -31,7 +31,7 @@ All extensions in this section receive a *data* object containing:
 > A function to convert a DOM object to its inner HTML string.  It takes the same *options* as the `domToHtml` function.
 
 `domUtils`
-> An object with functions for manipulating DOM objects.  The functions are defined in the various files [here](https://github.com/fb55/domutils/).
+> An object with functions for manipulating DOM objects.  The functions are defined in the various files [here](https://github.com/fb55/domutils/tree/master/src).
 
 ## TOC Generation extensions
 
