@@ -7,10 +7,10 @@ marked-it is a node.js module.  The API takes Markdown content and returns the c
 
 Beyond its core Markdown-to-HTML generation, marked-it provides various extended capabilities, including:
 - Markdown source support for Kramdown-style attributes ([details](https://ibm.github.io/marked-it/marked-it/attributes/))
-- Markdown source support for Jekyll-style front matter ([details](https://pages.github.ibm.com/cloud-doc-build/test-marked-it-spec/marked-it/attributes-definitions/))
+- Markdown source support for Jekyll-style front matter ([details](https://ibm.github.io/marked-it/marked-it/attributes-definitions/))
 - HTML generation hooks for customizing the generated output
 - Variable substitutions with values from either front matter or API arguments
-- Table of contents file creation and management ([details](https://pages.github.ibm.com/cloud-doc-build/test-marked-it-spec/marked-it-cli/toc/))
+- Table of contents file creation and management ([details](https://ibm.github.io/marked-it/marked-it-cli/toc/))
 
 ## Is marked-it accessible?
 Yes. We've implemented code to make our output fully accessible. Some examples of accessibility additions are:
