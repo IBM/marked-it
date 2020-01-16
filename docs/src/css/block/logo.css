@@ -1,0 +1,26 @@
+.logo {
+  position: relative;
+  display: block;
+  line-height: 2rem;
+  text-decoration: none;
+
+  &__image {
+    display: inline-block;
+    vertical-align: bottom;
+  }
+
+  &__text {
+    display: inline-block;
+    vertical-align: bottom;
+    margin-top: 0;
+    color: var(--navy-gray-1);
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 2rem;
+
+    &::before {
+      content: ': ';
+      font-weight: 700;
+    }
+  }
+}

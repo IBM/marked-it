@@ -1,0 +1,79 @@
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.4375rem;
+}
+
+h3 {
+  margin-top: 2rem;
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-bold);
+}
+
+h4 {
+  margin-top: 2rem;
+  color: var(--navy-gray-6);
+  font-size: 1.125rem;
+  letter-spacing: 0.05rem;
+  text-transform: uppercase;
+}
+
+h5 {
+  margin-top: 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+h6 {
+  margin-top: 2rem;
+  color: var(--navy-gray-6);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+}
+
+blockquote {
+  padding-left: 1rem;
+  border-left: 4px solid var(--gray-1);
+}
+
+li {
+  margin-top: 0.25rem;
+
+  ul,
+  li {
+    margin-top: 0;
+  }
+
+  p {
+    margin: 0 0 0.75rem;
+  }
+}
+
+strong,
+b {
+  font-weight: var(--font-weight-bold);
+}
+
+/* We only use <i> elements for icons, so override the font-style. */
+i {
+  font-style: normal;
+}
+
+pre {
+  background: var(--blue-90);
+  padding: 1rem;
+  color: var(--gray-1);
+  overflow-x: auto;
+}
+
+code {
+  font-family: monospace;
+
+  * {
+    font-family: inherit;
+  }
+}

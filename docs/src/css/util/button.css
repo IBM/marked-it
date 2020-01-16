@@ -1,0 +1,21 @@
+.u-button {
+  display: inline-block;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 2rem;
+  text-decoration: none;
+
+  &--main {
+    border: 2px solid var(--blue-51);
+    color: var(--blue-51);
+    transition: 150ms all linear;
+
+    &:focus,
+    &:hover,
+    &:active {
+      background-color: var(--blue-51);
+      color: var(--white);
+    }
+  }
+}

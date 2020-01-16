@@ -1,0 +1,15 @@
+getting-started:
+  title: Overview
+  icon: globe
+marked-it:
+  title: marked-it
+  icon: book
+marked-it-cli:
+  title: marked-it-cli
+  icon: code
+mdSyntaxExtensions:
+  title: IBM Cloud style
+  icon: map
+contribute:
+  title: How to contribute
+  icon: info
