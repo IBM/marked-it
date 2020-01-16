@@ -57,4 +57,4 @@ When the above Markdown is transformed into HTML5, the parser produces an ID wit
 **Note:** Header anchor IDs are output by default. No additional parameters or flags need to be passed to the parser when the command is run.
 
 ### Customizing an anchor ID on a header
-Even though the anchor ID is bound to a header by default, using the text of the header as its name, you can override it. To override the anchor tag of a header, you can use an attribute. See the [ID attributes](/attributes/#id-attributes) for more details.
+Even though the anchor ID is bound to a header by default, using the text of the header as its name, you can override it. To override the anchor tag of a header, you can use an attribute. See the [ID attributes](/marked-it/marked-it/attributes/#id-attributes) for more details.

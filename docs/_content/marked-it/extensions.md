@@ -11,14 +11,14 @@ All extension functions receive two arguments:
 
 If the extension function returns any string, including "", then that string will replace the initially-generated *value* in the end document.  If a non-string value is returned then the initially-generated *value* is preserved.
 
-For an example of an extension that adds *<caption>* elements to generated *<table>* elements see [./examples/extension-tableCaptions.js](./examples/extension-tableCaptions.js).
+For an example of an extension that adds *<caption>* elements to generated *<table>* elements see [/examples/extension-tableCaptions.js](https://ibm.github.io/marked-it/examples/extension-tableCaptions.js).
 
 ## HTML Generation extensions
 
 All extensions in this section receive a *data* object containing:
 
 `htmlToDom(string, options)`
-> A function that returns the HTML string for a DOM object.  See [options](https://github.com/fb55/htmlparser2/blob/master/lib/Parser.js).
+> A function that returns the HTML string for a DOM object.  See [options](https://github.com/fb55/htmlparser2/).
 
 `domToHtml(dom, options)`
 > A function that returns a DOM representation of an HTML string.
@@ -31,7 +31,7 @@ All extensions in this section receive a *data* object containing:
 > A function to convert a DOM object to its inner HTML string.  It takes the same *options* as the `domToHtml` function.
 
 `domUtils`
-> An object with functions for manipulating DOM objects.  The functions are defined in the various files [here](https://github.com/fb55/domutils/tree/master/lib).
+> An object with functions for manipulating DOM objects.  The functions are defined in the various files [here](https://github.com/fb55/domutils/).
 
 ## TOC Generation extensions
 
@@ -43,7 +43,7 @@ This extension receives a *data* object containing:
 > The source header string that this TOC entry would point to.
 
 `htmlToDom(string, options)`
-> A function that returns the HTML string for a DOM object.  See [options](https://github.com/fb55/htmlparser2/blob/master/lib/Parser.js).
+> A function that returns the HTML string for a DOM object.  See [options](https://github.com/fb55/htmlparser2/).
 
 `domToHtml(dom, options)`
 > A function that returns a DOM representation of an HTML string.
@@ -56,7 +56,7 @@ This extension receives a *data* object containing:
 > A function to convert a DOM object to its inner HTML string.  It takes the same *options* as the `domToHtml` function.
 
 `domUtils`
-> An object with functions for manipulating DOM objects.  The functions are defined in the various files found [here](https://github.com/fb55/domutils/tree/master/lib).
+> An object with functions for manipulating DOM objects.  The functions are defined in the various files found [here](https://github.com/fb55/domutils/).
 
 ### TOC Generation extension points
 
