@@ -11,7 +11,7 @@ All extension functions receive two arguments:
 
 If the extension function returns any string, including "", then that string will replace the initially-generated *value* in the end document.  If a non-string value is returned then the initially-generated *value* is preserved.
 
-For an example of an extension that adds *<caption>* elements to generated *<table>* elements see [/examples/extension-tableCaptions.js](https://ibm.github.io/marked-it/examples/extension-tableCaptions.js).
+For an example of an extension that adds *<caption>* elements to generated *<table>* elements see [/examples/extension-tableCaptions.js](https://github.com/IBM/marked-it/blob/master/examples/extension-tableCaptions.js).
 
 ## HTML Generation extensions
 
