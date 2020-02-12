@@ -9,7 +9,7 @@ All you need is a GitHub ID, and you can suggest edits and changes to marked-it.
 
 To make your changes:
 
-1. Go to [github.com/IBM/marked-it](https://github.IBM/marked-it) and fork the project or create a branch right from the repository.
+1. Go to [github.com/IBM/marked-it](https://github.com/IBM/marked-it) and fork the project or create a branch right from the repository.
 2. Edit files or upload new files.
 3. When your changes are complete, send a pull request from your branch with your changes.
 4. Wait for a team member to review your changes and merge all or parts of your suggested changes.
