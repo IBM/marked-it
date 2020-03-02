@@ -13,7 +13,7 @@ The following table provides mappings between Lightweight DITA, Markdown, and HT
 | **body**|`<body>`|`No equivalent` added during  transform |`<body>`|
 | **section** | `<section>` | `No equivalent` ##, ###, ####	 added for headings during transform  | `<section id="section-headingID”>` |
 | **image**  | `<image>`	|	`![alt text](image.jpg)` | `<img>` |
-| **video** | `<video>` | **Requirement** | `<video>` |	
+| **video** | `<video>` | **Requirement** (https://github.com/IBM/marked-it/issues/21)| `<video>` |	
 | **footnote**  | `<fn>`	|	[^1]: This is the first footnote.  |	`<span data-class=“fn”>	<hr id="footnotesSeparator"><ol id="footnotesList"><li id="footnote-ID”>` |
 | **note** | `<note>` 	|	`{:note: .note}`	|	`<div data-class=“note”><p class="note">This is a note paragraph.</p>`|
 | **unordered list** | `<ul>` | `*` or `-`| `<ul><li></li></ul>` |
