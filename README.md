@@ -1,6 +1,6 @@
 # marked-it
 
-A [marked](https://github.com/chjj/marked)-backed Markdown->HTML generator.  Supports extended attribute and front matter syntaxes, and provides hooks for modifying the generated HTML.
+A [marked](https://github.com/chjj/marked)-backed Markdown->HTML generator.  Supports extended attribute and front matter syntaxes, and provides hooks for modifying the generated HTML. Check out the [full documentation](https://ibm.github.io/marked-it/).
 
 ## Install
 
