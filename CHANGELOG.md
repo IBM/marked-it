@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.15.0] 2021-01-18
+Add extension "json.toc.onTopic" data attribute `frontMatterMap`.
+
 ## [0.14.1] 2020-03-07
 Fixed ALD detection regex.
 
