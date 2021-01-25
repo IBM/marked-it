@@ -22,7 +22,7 @@ The following table includes all the supported attributes in IBM Cloud.
 | `{:java: data-hd-programlang="java"}` | Applies a `class="ph" data-hd-programlang="java"` to indicate that content is for the java programming language.  |
 | `{:ruby: data-hd-programlang="ruby"}` | Applies a `class="ph" data-hd-programlang="java"` to indicate that content is for the ruby programming language.  |
 | `{:c#: data-hd-programlang="c#"}` | Applies a `class="ph" data-hd-programlang="c#"` to indicate that content is for the c# programming language.  |
-| `{:objectc data-hd-programlang="objectc"}` | Applies a `class="ph" data-hd-programlang="objectc"` to indicate that content is for the objective c programming language.  |
+| `{:objectc: data-hd-programlang="objectc"}` | Applies a `class="ph" data-hd-programlang="objectc"` to indicate that content is for the objective c programming language.  |
 | `{:python: data-hd-programlang="python"}` | Applies a `class="ph" data-hd-programlang="python"` to indicate that content is for the python programming language.  |
 | `{:javascript: data-hd-programlang="javascript"}` | Applies a `class="ph" data-hd-programlang="javascript"` to indicate that content is for the node programming language.  |
 | `{:php: data-hd-programlang="php"}` | Applies a `class="ph" data-hd-programlang="php"` to indicate that content is for the php programming language.  |
@@ -34,7 +34,7 @@ The following table includes all the supported attributes in IBM Cloud.
 | `{:tsCauses: .tsCauses}` |  Applies a `<p class="tsCauses">` to indicate that content is a cause within a troubleshooting topic. Additional styling can be applied like formatting or adding a label. |
 | `{:tsResolve: .tsResolve}` | Applies a `<p class="tsResolve">` to indicate that content is a resolution within a troubleshooting topic. Additional styling can be applied like formatting or adding a label.  |
 | `{:msgId: .msgID}` |  Applies a `class="msgID"` to indicate that content is a message ID within an error messages topic. Additional styling can be applied like formatting or adding a label.  |
-| `{msgExplanation: .msgExplanation}` |  Applies a `class="msgExplanation"` to indicate that content is an explanation of a message within an error messages topic. Additional styling can be applied like formatting or adding a label.  |
-| `{msgUserResponse: .msgUserResponse}` |  Applies a `class="msgResponse"` to indicate that content is an error response within an error messages topic. Additional styling can be applied like formatting or adding a label. |
+| `{:msgExplanation: .msgExplanation}` |  Applies a `class="msgExplanation"` to indicate that content is an explanation of a message within an error messages topic. Additional styling can be applied like formatting or adding a label.  |
+| `{:msgUserResponse: .msgUserResponse}` |  Applies a `class="msgResponse"` to indicate that content is an error response within an error messages topic. Additional styling can be applied like formatting or adding a label. |
 | `{:hide-in-docs: .hide-in-docs}` | Applies a `class="hide-in-docs"` to indicate that content should be excluded from displaying within the doc application. At runtime CSS would exclude from the page in the doc app, but might show it when used in another location like the UI.  |
-| `{hide-dashboard: .hide-dashboard}` | Applies a `class="hide-dashboard"` to indicate that content should be excluded from displaying within the UI. At runtime CSS would exclude from the page, but might show it when used in another location like the doc application.  |
+| `{:hide-dashboard: .hide-dashboard}` | Applies a `class="hide-dashboard"` to indicate that content should be excluded from displaying within the UI. At runtime CSS would exclude from the page, but might show it when used in another location like the doc application.  |
