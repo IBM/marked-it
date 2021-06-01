@@ -1,7 +1,5 @@
 /**
- * marked-it
- *
- * Copyright (c) 2014, 2017 IBM Corporation
+ * Copyright (c) 2021 IBM Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
  * and associated documentation files (the "Software"), to deal in the Software without restriction,
@@ -19,210 +17,152 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-var fs = require('fs');
-var assert = require('assert');
-var markedIt = require('../lib/marked-it');
+const assert = require('assert');
+const { domUtils } = require('../lib/common');
+const fs = require('fs');
+const highlightJs = require("highlight.js");
+const htmlparser = require("htmlparser2");
+const markedIt = require('../lib/marked-it');
 
 describe('markdownProcessor tests', function() {
 
     before(function() {});
     beforeEach(function() {});
     afterEach(function() {});
-    after(function() {});
-
-    describe('testADL', function() {
-		var OUTPUT_GENERATED_HTML = false;
-    	it('doit', function() {
-	    	var fd = fs.openSync('test/test_ADL.md', "r");
-	    	var mdText = readFile(fd);
-	    	fs.close(fd);
+	after(function() {});
 	
-	    	var result = markedIt.generate(mdText, {});
-	    	if (OUTPUT_GENERATED_HTML) {
-	    		console.log("-------------------------------\n" + result.html.text);
-	    	} else {
-	        	fd = fs.openSync('test/expectedResult_ADL.html', "r");
-	        	var expectedText = readFile(fd);
-	        	fs.close(fd);
-	    		assert.strictEqual(result.html.text, expectedText);
-	    	}
-    	});
-    });
+	function getOptions() {
+		const OPTIONS_MARKED = {
+			tables: true,
+			gfm: true,
+			headerPrefix: "",
+			xhtml: true,
+			langPrefix: "lang-",
+			highlight: function(code, lang) {
+				if (!lang) {
+					return null;
+				}
+				try {
+					return highlightJs.highlight(lang, code).value;
+				} catch(e) {
+					return null;
+				}
+			}
+		};
+		const OPTIONS_MARKDOWNIT = {
+		    html: true,
+		    linkify: true,
+		    highlight: OPTIONS_MARKED.highlight
+		};
+		let version = process.env.VERSION === "2" ? 2 : 1;
+		return {
+			"version": version,
+			"markedOptions": version === 2 ? OPTIONS_MARKDOWNIT : OPTIONS_MARKED
+		};
+	}
 
-    describe('testExtensions', function() {
-		var OUTPUT_GENERATED_HTML = false;
-    	it('doit', function() {
-	    	var fd = fs.openSync('test/test_extensions.md', "r");
-	    	var mdText = readFile(fd);
-	    	fs.close(fd);
+    describe('extensionsTest', function() {
+		const OUTPUT_GENERATED_HTML = false;
+    	it('extensionsTest', function() {
+	    	let fd = fs.openSync('test/extensionsTest-source.md', "r");
+	    	let mdText = readFile(fd);
+	    	fs.closeSync(fd);
 
-			function checkData(data) {
-				assert(data.htmlToDom && typeof data.htmlToDom === "function");
-				assert(data.domToHtml && typeof data.domToHtml === "function");
-				assert(data.domToInnerHtml && typeof data.domToInnerHtml === "function");
-				assert(data.domUtils && typeof data.domUtils === "object");
+			function addChild(html, data) {
+				let dom = data.htmlToDom(html)[0];
+				let newChild = data.htmlToDom(`<child>Child for ${dom.name}</child>`);
+				data.domUtils.appendChild(dom, newChild[0]);
+				return data.domToHtml(dom);
 			}
 
-			var extensions = {
-				html: {
-					onHeading: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)h(\\d)", "g"), "<$1header-repl$2");
-					},
-					onCode: function(source, data) {
-						checkData(data);
-						return source
-							.replace(new RegExp("<(/?)pre>", "g"), "<$1pre-repl>")
-							.replace(new RegExp("<(/?)code>", "g"), "<$1code-repl>");
-					},
-					onBlockquote: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)blockquote", "g"), "<$1blockquote-repl");
-					},
-					onHtml: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("([<>])", "g"), "$1$1$1");
-					},
-					onHr: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)hr", "g"), "<$1hr-repl");
-					},
-					onList: function(source, data) {
-						checkData(data);
-						return source
-							.replace(new RegExp("<(/?)ul", "g"), "<$1ul-repl")
-							.replace(new RegExp("<(/?)ol", "g"), "<$1ol-repl");
-					},
-					onListItem: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)li", "g"), "<$1li-repl");
-					},
-					onParagraph: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)p", "g"), "<$1p-repl");
-					},
-					onTable: function(source, data) {
-						checkData(data);
-						return source
-							.replace(new RegExp("<(/?)table", "g"), "<$1table-repl")
-							.replace(new RegExp("<(/?)thead", "g"), "<$1thead-repl")
-							.replace(new RegExp("<(/?)tbody", "g"), "<$1tbody-repl");
-					},
-					onTablerow: function(source, data) {
-						checkData(data);
-						return source
-							.replace(new RegExp("<(/?)tr", "g"), "<$1tr-repl")
-							.replace(new RegExp("<(/?)th", "g"), "<$1th-repl");
-					},
-					onTablecell: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)td", "g"), "<$1td-repl");
-					},
-					
-					onStrong: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)strong", "g"), "<$1strong-repl");
-					},
-					onEmphasis: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)em", "g"), "<$1em-repl");
-					},
-					onCodespan: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)code", "g"), "<$1code-repl");
-					},
-					onLinebreak: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)br", "g"), "<$1br-repl");
-					},
-					onDel: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)del", "g"), "<$1del-repl");
-					},
-					onLink: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)a", "g"), "<$1a-repl");
-					},
-					onImage: function(source, data) {
-						checkData(data);
-						return source.replace(new RegExp("<(/?)img", "g"), "<$1img-repl");
+	    	let extensions = {
+	    		html: {
+					onHeading: addChild,
+					onCode: addChild,
+					onBlockquote: addChild,
+					onHr: addChild,
+					onList: addChild,
+					onListItem: addChild,
+					onParagraph: addChild,
+					onTable: addChild,
+					onTablerow: addChild,
+					onTablecell: addChild,
+					onStrong: addChild,
+					onEmphasis: addChild,
+					onCodespan: addChild,
+					onDel: addChild,
+					onLink: addChild,
+					onImage: function(html, data) {
+						/* img tags cannot have children so handle differently from the other element types */
+						let dom = data.htmlToDom(html)[0];
+						dom.attribs.title = `Title for ${dom.name}`;
+						return data.domToHtml(dom);
 					}
-				}
-			};
-			
-	    	var result = markedIt.generate(mdText, {extensions: extensions});
+	    		}
+	    	};
+
+			let options = getOptions();
+			options.extensions = extensions;
+	    	let result = markedIt.generate(mdText, options);
 	    	if (OUTPUT_GENERATED_HTML) {
 	    		console.log("-------------------------------\n" + result.html.text);
-	    	} else {
-	        	fd = fs.openSync('test/expectedResult_extensions.html', "r");
-	        	var expectedText = readFile(fd);
-	        	fs.close(fd);
-	    		assert.strictEqual(result.html.text, expectedText);
-	    	}
-    	});
-    });
+			}
+			let dom = htmlToDom(result.html.text);
 
-//    describe('testBlockIAL', function() {
-//		var OUTPUT_GENERATED_HTML = false;
-//    	var fd = fs.openSync('./test_block_IAL.md', "r");
-//    	var mdText = readFile(fd);
-//    	fs.close(fd);
-//
-//    	var resultText = htmlGenerator.generate(mdText, true);
-//    	if (OUTPUT_GENERATED_HTML) {
-//    		console.log("-------------------------------\n" + resultText);
-//    	} else {
-//			fd = fs.openSync('./expectedResult_block_IAL.html', "r");
-//			var expectedText = readFile(fd);
-//			fs.close(fd);
-//    		assert.strictEqual(resultText, expectedText);
-//    	}
-//    });    
-//
-//    describe('testSpanIAL', function() {
-//		var OUTPUT_GENERATED_HTML = false;
-//    	var fd = fs.openSync('./test_span_IAL.md', "r");
-//    	var mdText = readFile(fd);
-//    	fs.close(fd);
-//
-//    	var resultText = htmlGenerator.generate(mdText, true);
-//    	if (OUTPUT_GENERATED_HTML) {
-//    		console.log("-------------------------------\n" + resultText);
-//    	} else {
-//			fd = fs.openSync('./expectedResult_span_IAL.html', "r");
-//			var expectedText = readFile(fd);
-//			fs.close(fd);
-//    		assert.strictEqual(resultText, expectedText);
-//    	}
-//    });
-    
-//    describe('testVariables', function() {
-//		var OUTPUT_GENERATED_HTML = false;
-//    	var fd = fs.openSync('./test_variables.md', "r");
-//    	var mdText = readFile(fd);
-//    	fs.close(fd);
-//
-//    	var resultText = htmlGenerator.generate(mdText, true);
-//    	if (OUTPUT_GENERATED_HTML) {
-//    		console.log("-------------------------------\n" + resultText);
-//    	} else {
-//        	fd = fs.openSync('./mdProcessor.html', "r");
-//        	var expectedText = readFile(fd);
-//        	fs.close(fd);
-//    		assert.strictEqual(resultText, expectedText);
-//    	}
-//    });
+			let elementIds = [
+				"h1-atx", "h2-atx", "h3-atx", "h4-atx", "h5-atx", "h6-atx", "h1-setext", "h2-setext",
+				"strong1", "strong2", "emphasized1", "emphasized2",
+				"codeblock", "codespan", "link1", "paragraph1",
+				"blockquote", "ordered-list", "unordered-list", "image1",
+				"table"
+			];
+			elementIds.forEach(function(id) {
+				let element = htmlparser.DomUtils.getElementById(id, dom, true);
+				assert(element, "Expected element found: #" + id);
+				if (element.name === "img") {
+					/* img tags cannot have children so handle differently from the other element types */
+					assert(element.attribs.title.indexOf(element.name) !== -1, "Expected title text found for: #" + id);
+				} else {
+					let childChildren = htmlparser.DomUtils.find(function(child) {return child.name === "child"}, [element], true);
+					assert(childChildren.length, "Expected extension-added child found for: #" + id);
+					let found = false;
+					childChildren.forEach(function(child) {
+						if (child.children[0].data.indexOf(element.name) !== -1) {
+							found = true;
+						}
+					});
+					assert(found, "Expected child text found for: #" + id);
+				}
+			});
+    	});
+	});
 });
 
+function htmlToDom(string, options) {
+	let result;
+	let handler = new htmlparser.DomHandler(function(error, dom) {
+	    if (error) {
+	        console.log("*** Failed to parse HTML:\n" + error.toString());
+	    } else {
+	        result = dom;
+	    }
+	});
+	let parser = new htmlparser.Parser(handler, options || {});
+	parser.write(string.trim());
+	parser.done();
+
+	return result;
+}
+
 function readFile(fd) {
-	var readStat = fs.fstatSync(fd);
-	var readBlockSize = readStat.blksize || 4096;
-	var fileSize = readStat.size;
+	let readStat = fs.fstatSync(fd);
+	let readBlockSize = readStat.blksize || 4096;
+	let fileSize = readStat.size;
 	if (!fileSize) {
 		return "";
 	}
-	var inBuffer = new Buffer(fileSize);
-	var totalReadCount = 0;
+	let inBuffer = Buffer.alloc(fileSize);
+	let totalReadCount = 0;
 	do {
 		var length = Math.min(readBlockSize, fileSize - totalReadCount);
 		var readCount = fs.readSync(fd, inBuffer, totalReadCount, length, null);
