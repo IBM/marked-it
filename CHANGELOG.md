@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.16.0] 2021-07-12
+Added initial support for use of markdown-it as the core md->html generator.
+
 ## [0.15.0] 2021-01-18
 Add extension "json.toc.onTopic" data attribute `frontMatterMap`.
 
