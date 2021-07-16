@@ -38,15 +38,15 @@ describe('markdownProcessor tests', function() {
 			headerPrefix: "",
 			xhtml: true,
 			langPrefix: "lang-",
-			highlight: function(code, lang) {
-				if (!lang) {
-					return null;
-				}
-				try {
-					return highlightJs.highlight(lang, code).value;
-				} catch(e) {
-					return null;
-				}
+			highlight: function(str, lang) {
+			    if (lang && highlightJs.getLanguage(lang)) {
+			        try {
+			            return highlightJs.highlight(str, { language: lang }).value;
+			        } catch (e) {
+			            return null;
+			        }
+			    }
+			    return '';
 			}
 		};
 		const OPTIONS_MARKDOWNIT = {

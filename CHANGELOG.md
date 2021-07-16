@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.16.1] 2021-07-16
+Fix syntax styling for code blocks when using markdown-it.
+
 ## [0.16.0] 2021-07-12
 Added initial support for use of markdown-it as the core md->html generator.
 
