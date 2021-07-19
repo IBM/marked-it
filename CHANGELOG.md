@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.16.2] 2021-07-19
+Improvement to generation of syntax styling.
+
 ## [0.16.1] 2021-07-16
 Fix syntax styling for code blocks when using markdown-it.
 
