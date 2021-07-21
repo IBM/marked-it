@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.16.3] 2021-07-21
+Don't pre-process within code fences when using markdown-it.
+
 ## [0.16.2] 2021-07-19
 Improvement to generation of syntax styling.
 
