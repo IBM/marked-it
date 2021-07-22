@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.16.4] 2021-07-22
+Add automatic support for attributes that follow fenced code blocks when using markdown-it.
+
 ## [0.16.3] 2021-07-21
 Don't pre-process within code fences when using markdown-it.
 
