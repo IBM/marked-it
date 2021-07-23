@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.16.6] 2021-07-23
+Add auto-generation of header ids (in the absence of an id attribute) when using markdown-it.
+
 ## [0.16.5] 2021-07-22
 Add automatic support for attributes that follow fenced code blocks when using markdown-it.
 
