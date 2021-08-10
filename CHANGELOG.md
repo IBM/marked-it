@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.16.7] 2021-08-10
+Work around markdown-it-attrs bug that can cause a crash in the absence of trailing whitespace.
+
 ## [0.16.6] 2021-07-23
 Add auto-generation of header ids (in the absence of an id attribute) when using markdown-it.
 
