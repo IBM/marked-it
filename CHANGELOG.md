@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.17.1] 2021-08-11
+Update the dependency on markdown-it-attrs.
+
 ## [0.17.0] 2021-08-11
 Add processing of table cell content as markdown (for markdown-it renderer only) and fix attribute placement bug.
 
