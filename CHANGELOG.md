@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.17.2] 2021-08-17
+Improve handling of attributes on tables and pick up the latest markdown-it-attrs.
+
 ## [0.17.1] 2021-08-11
 Update the dependency on markdown-it-attrs.
 
