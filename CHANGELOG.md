@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.17.3] 2021-08-27
+Fix processing of table cell contents and stop linkifying fuzzy urls.
+
 ## [0.17.2] 2021-08-17
 Improve handling of attributes on tables and pick up the latest markdown-it-attrs.
 
