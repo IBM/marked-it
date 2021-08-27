@@ -2,7 +2,7 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
-## [0.17.3] 2021-08-27
+## [0.17.3 and 0.17.4] 2021-08-27
 Fix processing of table cell contents and stop linkifying fuzzy urls.
 
 ## [0.17.2] 2021-08-17
