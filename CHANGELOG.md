@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.17.5] 2021-09-07
+Improve handling of table cells that start with HTML tags.
+
 ## [0.17.3 and 0.17.4] 2021-08-27
 Fix processing of table cell contents and stop linkifying fuzzy urls.
 
