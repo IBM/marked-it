@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.17.6] 2021-09-15
+Fix injection of variables to not touch code blocks.
+
 ## [0.17.5] 2021-09-07
 Improve handling of table cells that start with HTML tags.
 
