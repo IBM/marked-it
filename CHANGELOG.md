@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.17.8] 2021-09-17
+Pick up the latest markdown-it-attrs.
+
 ## [0.17.6 and 0.17.7] 2021-09-15
 Fix injection of variables to not touch code blocks.
 
