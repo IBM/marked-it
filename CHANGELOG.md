@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.17.10] 2021-09-23
+Another fix for detection of code block bounds.
+
 ## [0.17.9] 2021-09-22
 Fix detection of code block bounds.
 
