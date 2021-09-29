@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.17.12] 2021-09-29
+Fix detection of tags in table cells to ignore code sections.
+
 ## [0.17.11] 2021-09-28
 Fix regression in detection of code block bounds.
 
