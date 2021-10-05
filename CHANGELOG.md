@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [0.17.13] 2021-10-05
+Fix handling of the string "<code>" within an inline code span in a table cell.
+
 ## [0.17.12] 2021-09-29
 Fix detection of tags in table cells to ignore code sections.
 
