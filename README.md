@@ -103,8 +103,7 @@ All extensions in this section receive a *data* object containing:
 > *html.onHeading*  
 > *html.onCode*  
 > *html.onBlockquote*  
-> *html.onHtml*  
-> *html.onHr*  
+> *html.onHorizontalRule*  
 > *html.onList*  
 > *html.onListItem*  
 > *html.onParagraph*  
