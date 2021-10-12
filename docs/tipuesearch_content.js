@@ -1,4 +1,0 @@
-var tipuesearch = {
-  "pages": [
-  ]
-};
