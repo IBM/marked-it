@@ -1,14 +1,8 @@
-# github.com/IBM/marked-it
-This repository is for a Markdown generator and the specification documenting it at:
-https://pages.github.com/marked-it/
+![marked-it leadspace](marked-it.png ":no-zoom")
+# Welcome to the documentation for marked-it!
 
-# Built on docs-starter
-The gitpages of this tool would not exist without the _fantastic_ project [Docs Starter](http://github.ibm.com/Jason-Lengstorf/docs-starter) by Jason Lengstorf. We are most grateful...
+IBM Cloud has designed a generator that transforms Markdown into HTML5. Because the syntax available in standard Markdown is limited, the IBM Cloud team has developed extensions to provide an enhanced authoring experience.
 
-# Contributing
+These extensions provide key features available in DITA today, for example the ability to use metadata attributes and content references in Markdown.
 
-We love help! Please feel welcome to open PRs for the code or the docs.
-
-**Major Changes**
-
-See the wiki. 
+This site provides instructions for setting up your environment, authoring in Markdown by using extensions, and troubleshooting errors.
