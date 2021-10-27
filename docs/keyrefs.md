@@ -32,7 +32,7 @@ A key reference, also known as a keyref, is a way to define a value once and ref
  
 5. Now you can reference this keyref from anywhere in your Markdown topics. Keyrefs are referenced using syntax: {\{site.data.key+}}. So to reference your new keyref, you would use: {\{site.data.keyword.amazing_thing}}.
  
-6. Run mdProcessor on your file, ensuring that you use the `--keyrefFile` flag:
+6. Run mdProcessor on your file, ensuring that you use the `--keyref-file` flag:
  
    ```bash
    node bin/marked-it-cli C:\pilot\sourceMD --output=C:\pilot\outputMD --header-file=header.txt --footer-file=footer.txt --keyref-file=keyrefs.yml --overwrite
@@ -41,7 +41,7 @@ A key reference, also known as a keyref, is a way to define a value once and ref
 7. The HTML5 output will contain the string "Amazing Thing" in each location that the source Markdown contains {\{site.data.keyword.amazing_thing}}.
 
 ## How does marked-it process keyrefs?
-The keyref extension is invoked by the generator by using the keyrefFile flag: `--keyref-file=keyrefs.yml`. 
+The keyref extension is invoked by the generator by using the keyref-file flag: `--keyref-file=keyrefs.yml`. 
  
  >node mdProcessor.js --sourceDir=C:\pilot\sourceMD --destDir=C:\pilot\outputMD --headerFile=header.txt --footerFile=footer.txt 
  >**--keyref-file=keyrefs.yml** -overwrite
