@@ -17,7 +17,7 @@
 - Extensions & plug-ins
 
   - [Headers and footers](headers.md)
-  - [Content key references](conkeyrefs.md)
+  - [Key references](keyrefs.md)
   - [Content references](conrefs.md)
   - [Definition lists](definition-lists.md)
   - [Footnotes](footnotes.md)
