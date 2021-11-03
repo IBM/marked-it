@@ -1,0 +1,20 @@
+toc:
+  properties:
+    facet1: value1
+    facet2: value2
+    facet3: value3
+    label: Doc set title
+
+  entries:
+    topics:
+    - topic: test-cases.md
+      navtitle: My custom toc label
+    - topic2.md
+    - topic3.md
+    links:
+    - link:
+        label: Link Label 1
+        href: https://link1.com
+    - link:
+        label: Link Label 2
+        href: https://link2.com
