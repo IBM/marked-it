@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.0.0] 2021-12-07
+**Version 2.0**. Makes markdown-it the **default** underlying HTML generator.
+
 ## [0.17.13] 2021-10-05
 Fix handling of the string "<code>" within an inline code span in a table cell.
 
