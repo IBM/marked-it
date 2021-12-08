@@ -28,7 +28,7 @@
 		"test": "mocha test/test.js"
 	},
 	"dependencies": {
-		"marked": "0.3.9",
+		"marked": "0.3.18",
 		"htmlparser2": "3.8.3",
 		"js-yaml": "3.13.1",
 		"pretty-data": "0.40.0",
