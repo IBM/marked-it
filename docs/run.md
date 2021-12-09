@@ -1,5 +1,21 @@
 # How do I run marked-it-cli?
 
+## Before you begin: Optional environment variable
+
+As of version 2.0.0, `marked-it-cli` uses [markdown-it](https://github.com/markdown-it/markdown-it) as the default Markdown parser. Previous versions of `marked-it-cli` used [marked](https://github.com/markedjs/marked) as the default parser. You can control which underlying parser you use by setting the `VERSION` environment variable before you run `marked-it-cli`. 
+- `VERSION=2` sets `markdown-it` as the parser
+- `VERSION=1` sets `marked` as the parser
+
+For example, if you're running `marked-it-cli` 0.29.13 but want to use the updated `markdown-it` parser and associated features, set the environment variable by running the following command:
+
+```bash
+export VERSION=2
+```
+
+> **Note:** Parser selection is available only in `marked-it-cli` 0.25.1 and later. Previous versions of `marked-it-cli` support only `marked`. 
+
+## `marked-it-cli` command
+
 ### Syntax
 
 ```bash
@@ -30,4 +46,5 @@ marked-it-cli <sourceDirectory> --output=<destinationDirectory> [OPTIONS]
 | --extension-file=./example/jsonTocExt.js | Creates a JSON formatted toc file. This is included with the Markdown generator in the examples directory. |
 | --toc-json | Works with `jsonTocExt.js` to generate the `toc.json` file. <br> **Note**: Extensions are packaged in the parser and can be found in `node_modules/marked-it-cli/example`. |
 | --overwrite | Allows you to write new HTML5 files to the same directory over the top of exisiting files. |
+| --verbose | Runs the parser with full logging output. |
 
