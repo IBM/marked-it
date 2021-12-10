@@ -1,18 +1,21 @@
 # How do I run marked-it-cli?
 
-## Before you begin: Optional environment variable
+As of version 2.0.0, `marked-it-cli` uses [markdown-it](https://github.com/markdown-it/markdown-it) as the core dependency. Previous versions of `marked-it-cli` used [marked](https://github.com/markedjs/marked) as the core dependency, but after version 0.25.1 you have the option of using either. 
 
-As of version 2.0.0, `marked-it-cli` uses [markdown-it](https://github.com/markdown-it/markdown-it) as the default Markdown parser. Previous versions of `marked-it-cli` used [marked](https://github.com/markedjs/marked) as the default parser. You can control which underlying parser you use by setting the `VERSION` environment variable before you run `marked-it-cli`. 
+## Before you begin
+
+If you want to use a previous version of marked-it, you can control which core dependency you use by setting the `VERSION` environment variable before you run `marked-it-cli`. However, parser selection is available only in `marked-it-cli` 0.25.1 and later. Previous versions of `marked-it-cli` support only `marked`.
+
 - `VERSION=2` sets `markdown-it` as the parser
 - `VERSION=1` sets `marked` as the parser
 
-For example, if you're running `marked-it-cli` 0.29.13 but want to use the updated `markdown-it` parser and associated features, set the environment variable by running the following command:
+For example, if you're running `marked-it-cli` 0.29.13 but want to use the updated `markdown-it` and associated features, set the environment variable by running the following command:
 
 ```bash
 export VERSION=2
 ```
 
-> **Note:** Parser selection is available only in `marked-it-cli` 0.25.1 and later. Previous versions of `marked-it-cli` support only `marked`. 
+If you are using version 2.0.0, you do not need to set the version environment variable.
 
 ## `marked-it-cli` command
 
