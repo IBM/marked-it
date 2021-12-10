@@ -4,7 +4,7 @@ As of version 2.0.0, `marked-it-cli` uses [markdown-it](https://github.com/markd
 
 ## Before you begin
 
-If you want to use a previous version of marked-it, you can control which core dependency you use by setting the `VERSION` environment variable before you run `marked-it-cli`. However, parser selection is available only in `marked-it-cli` 0.25.1 and later. Previous versions of `marked-it-cli` support only `marked`.
+If you want to use a previous version of marked-it, you can control which core dependency you use by setting the `VERSION` environment variable before you run `marked-it-cli`. However, core dependency selection is available only in `marked-it-cli` 0.25.1 and later. Previous versions of `marked-it-cli` support only `marked`.
 
 - `VERSION=2` sets `markdown-it` 
 - `VERSION=1` sets `marked` 
