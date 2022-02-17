@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.0.1] 2022-02-17
+Fix table generation bug when table cell content begins with formatting like bold or italics.
+
 ## [2.0.0] 2021-12-07
 **Version 2.0**. Makes markdown-it the **default** underlying HTML generator.
 
