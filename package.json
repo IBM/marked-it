@@ -40,6 +40,6 @@
 	},
 	"devDependencies": {
 		"highlight.js": "11.1.0",
-		"mocha": "^5.2.0"
+		"mocha": "^10.0.0"
 	}
 }
