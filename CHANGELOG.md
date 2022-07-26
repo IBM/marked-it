@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.1.0] 2022-07-21
+Add support for additional keys that do not start with <site.> in variableMaps.
+
 ## [2.0.1] 2022-02-17
 Fix table generation bug when table cell content begins with formatting like bold or italics.
 
