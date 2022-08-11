@@ -19,6 +19,7 @@
   - [Headers and footers](headers.md)
   - [Key references](keyrefs.md)
   - [Content references](conrefs.md)
+  - [Includes](includes.md)
   - [Definition lists](definition-lists.md)
   - [Footnotes](footnotes.md)
   - [Audio](audio.md)
