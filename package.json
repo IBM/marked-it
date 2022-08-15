@@ -25,7 +25,8 @@
 		"lib/"
 	],
 	"scripts": {
-		"test": "mocha test/test.js"
+		"test": "mocha test/testsV1.js",
+		"tests": "mocha test/testsV2.js"
 	},
 	"dependencies": {
 		"marked": "0.3.9",
