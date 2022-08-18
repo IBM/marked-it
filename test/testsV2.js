@@ -530,17 +530,51 @@ describe('htmlGenerator2 tests', function() {
 
 			let variablesString = getElement(dom, "variables");
 			let resolvedString = variablesString.children[0].data;
-			let expectedString = "This sentence has a Root-Level variable, a Root-Level-Path variable, a Hierarchical variable and a {{missing}} one.";
+			let expectedString = "This sentence has a Root-Level variable, a Root-Level-Path variable, a Hierarchical variable, a Front Matter variable and a {{missing}} one.";
+			assert(resolvedString === expectedString, `Variable substitution did not give the expected result.\nExpected: ${expectedString}\nActual  : ${resolvedString}`);
+		});
+
+		it("Front matter processing turned off", function() {
+			let customOptions = { ...options };
+			customOptions.variablesMap = {
+				"root-level": "Root-Level",
+				"root-level-path": "Root-Level-Path",
+				hierarchical: {label: {string: "Hierarchical"}}
+			};
+			customOptions.processFrontMatter = false;
+			let result = markedIt.generate(sourceV2, customOptions);
+			let html = result.html.text;
+			let dom = htmlToDom(html);
+
+			let variablesString = getElement(dom, "variables");
+			let resolvedString = variablesString.children[0].data;
+			let expectedString = "This sentence has a Root-Level variable, a Root-Level-Path variable, a Hierarchical variable, a {{front.matter}} variable and a {{missing}} one.";
 			assert(resolvedString === expectedString, `Variable substitution did not give the expected result.\nExpected: ${expectedString}\nActual  : ${resolvedString}`);
 		});
 	});
 
-    // describe('extensionsTest', function() {
-	// 	const OUTPUT_GENERATED_HTML = false;
-    // 	it('extensionsTest', function() {
-	//     	let fd = fs.openSync('test/extensionsTest-source.md', "r");
-	//     	let mdText = readFile(fd);
-	//     	fs.closeSync(fd);
+	describe('Table of Contents (JSON)', function() {
+		it("Validate Generation", function() {
+			let toc = JSON.parse(returnedValue.jsonToc.text);
+			assert(toc.toc.topics.length === 2, `There were ${toc.toc.topics.length} top-level topics generated but there should have been 2.\n\n${JSON.stringify(toc, null, 4)}`);
+			let topTopic2 = toc.toc.topics[1];
+			assert(topTopic2.topics.length === 6, `There were ${topTopic2.topics.length} topics generated under the second top-level topic but there should have been 6.\n\n${JSON.stringify(topTopic2.topics, null, 4)}`);
+		})
+		it("Validate Errors", function() {
+			assert(returnedValue.jsonToc.errors.length === 1, "There were ${returnedValue.jsonToc.errors.length} TOC generation errors reported but there should have been 1 (invalid H6)");
+		})
+		it("Footnote excluded from TOC text", function() {
+			let toc = JSON.parse(returnedValue.jsonToc.text);
+			let topTopic2 = toc.toc.topics[1];
+			let childTopics = topTopic2.topics;
+			let re = /footnote.+$/;
+			childTopics.forEach(function(current) {
+				if (re.test(current.label)) {
+					assert(false, `A header was found with trailing footnote characters: "${current.label}"`);
+				}
+			});
+		})
+	});
 
 			let variablesString = getElement(dom, "variables");
 			let resolvedString = variablesString.children[0].data;
@@ -589,6 +623,24 @@ describe('htmlGenerator2 tests', function() {
 			});
 		})
 	});
+
+	describe('Indentation normalization', function() {
+		// TODO
+	});
+
+    describe('Extensions', function() {
+		const OUTPUT_GENERATED_HTML = false;
+    	it('All HTML generation extensions', function() {
+	    	let fd = fs.openSync('test/extensionsTest-source.md', "r");
+	    	let mdText = readFile(fd);
+	    	fs.closeSync(fd);
+
+			function addChild(html, data) {
+				let dom = data.htmlToDom(html)[0];
+				let newChild = data.htmlToDom(`<child>Child for ${dom.name}</child>`);
+				data.domUtils.appendChild(dom, newChild[0]);
+				return data.domToHtml(dom);
+			}
 
 	describe('Indentation normalization', function() {
 		// TODO
