@@ -419,6 +419,28 @@ describe('htmlGenerator2 tests', function() {
 			assert(trs.length === 2, `The table with a blank last cell did not generate with the expected number of rows (2).\n\n${toHTML(table)}`);
 		});
 
+		it("Table cell processing turned off", function() {
+			let customOptions = { ...options };
+			customOptions.processTableCellContent = false;
+			let result = markedIt.generate(sourceV2, customOptions);
+			let html = result.html.text;
+			let dom = htmlToDom(html);
+
+			let table = getElement(dom, "tableWithCellFormatting");
+			let tds = htmlparser.DomUtils.find(function(node) {
+				return node.name === "td"
+			}, [table], true);
+			let missingNewlines = 0;
+			tds.forEach(function(td) {
+				let newline = htmlparser.DomUtils.find(function(node) {
+					return node.type === "text" && node.data.indexOf("\n") === 0;
+				}, [td], true);
+				if (!newline.length) {
+					missingNewlines++;
+				}
+			});
+			assert(missingNewlines === 4, `Processing of table cell content appears to have happened even though it should have been disabled via the "processTableCellContent" option.\n\n${toHTML(table)}`);
+		});
 	});
 
     // describe('extensionsTest', function() {
