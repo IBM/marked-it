@@ -189,5 +189,9 @@ This sentence has a {{root-level}} variable, a {{root-level-path}} variable, a {
 <-- the deepest header level -->
 ###### H6
 
+
+This sentence has a {{root-level}} variable, a {{root-level-path}} variable, a {{hierarchical.label.string}} variable and a {{missing}} one.
+{: #variables}
+
 Final Element that intentionally ends with an attribute and no terminating whitespace
 {: #lastElement}

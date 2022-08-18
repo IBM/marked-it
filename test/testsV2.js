@@ -530,6 +530,20 @@ describe('htmlGenerator2 tests', function() {
 
 			let variablesString = getElement(dom, "variables");
 			let resolvedString = variablesString.children[0].data;
+			let expectedString = "This sentence has a Root-Level variable, a Root-Level-Path variable, a Hierarchical variable and a {{missing}} one.";
+			assert(resolvedString === expectedString, `Variable substitution did not give the expected result.\nExpected: ${expectedString}\nActual  : ${resolvedString}`);
+		});
+	});
+
+    // describe('extensionsTest', function() {
+	// 	const OUTPUT_GENERATED_HTML = false;
+    // 	it('extensionsTest', function() {
+	//     	let fd = fs.openSync('test/extensionsTest-source.md', "r");
+	//     	let mdText = readFile(fd);
+	//     	fs.closeSync(fd);
+
+			let variablesString = getElement(dom, "variables");
+			let resolvedString = variablesString.children[0].data;
 			let expectedString = "This sentence has a Root-Level variable, a Root-Level-Path variable, a Hierarchical variable, a Front Matter variable and a {{missing}} one.";
 			assert(resolvedString === expectedString, `Variable substitution did not give the expected result.\nExpected: ${expectedString}\nActual  : ${resolvedString}`);
 		});
