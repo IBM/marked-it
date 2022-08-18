@@ -221,6 +221,206 @@ describe('htmlGenerator2 tests', function() {
 		});
 	});
 
+	describe('Linkification', function() {
+		it("Plaintext Links", function() {
+			let link = getElement(dom, "plaintextLink");
+			let linkFound = false;
+			link.children.forEach(function(current) {
+				if (current.name === "a") {
+					linkFound = true;
+				}
+			});
+			assert(linkFound, "Linkification failed for a plaintext link that should have been detected.");
+		});
+		it("Fuzzy e-mail addresses", function() {
+			let fuzzyEmail = getElement(dom, "fuzzyEmail");
+			let linkFound = false;
+			fuzzyEmail.children.forEach(function(current) {
+				if (current.name === "a") {
+					linkFound = true;
+				}
+			});
+			assert(linkFound, "Linkification failed for a fuzzy email address that should have been detected.");
+		});
+		it("Fuzzy Links", function() {
+			let fuzzyLink = getElement(dom, "fuzzyLink");
+			let linkFound = false;
+			fuzzyLink.children.forEach(function(current) {
+				if (current.name === "a") {
+					linkFound = true;
+				}
+			});
+			assert(!linkFound, "Linkification should have ignored a fuzzy link that was detected.");
+		});
+	});
+
+	describe('Tables', function() {
+		it("Table cells with formatting", function() {
+			let table = getElement(dom, "tableWithCellFormatting");
+			let em = htmlparser.DomUtils.find(function(node) {
+				return node.name === "em"
+			}, [table], true);
+			let strong = htmlparser.DomUtils.find(function(node) {
+				return node.name === "strong"
+			}, [table], true);
+			assert(em.length && strong.length, `Failed to find the expected <em> and/or <strong> element in the table containing formatting.\n\n${toHTML(table)}`);
+		});
+		it("Table cells with lists", function() {
+			let table = getElement(dom, "tableWithCellFormatting");
+			let ul = htmlparser.DomUtils.find(function(node) {
+				return node.name === "ul"
+			}, [table], true);
+			assert(ul.length === 2, `Failed to find the two expected <ul> elements in the table containing lists.\n\n${toHTML(table)}`);
+		});
+		it("Table cells with newlines", function() {
+			let table = getElement(dom, "tableWithCellFormatting");
+			let tds = htmlparser.DomUtils.find(function(node) {
+				return node.name === "td"
+			}, [table], true);
+			let missingNewline = false;
+			tds.forEach(function(td) {
+				let newline = htmlparser.DomUtils.find(function(node) {
+					return node.type === "text" && node.data.indexOf("\n") === 0;
+				}, [td], true);
+				if (!newline.length) {
+					missingNewline = true;
+				}
+			});
+			assert(!missingNewline, `Failed to find at least one of the expected newlines in the table containing a \\n in each body cell.\n\n${toHTML(table)}`);
+		});
+		it("Table header cells with newlines", function() {
+			let table = getElement(dom, "tableWithCellFormatting");
+			let ths = htmlparser.DomUtils.find(function(node) {
+				return node.name === "th"
+			}, [table], true);
+			let missingNewline = false;
+			ths.forEach(function(th) {
+				let newline = htmlparser.DomUtils.find(function(node) {
+					return node.type === "text" && node.data.indexOf("\n") === 0;
+				}, [th], true);
+				if (!newline.length) {
+					missingNewline = true;
+				}
+			});
+			assert(!missingNewline, `Failed to find at least one of the expected newlines in the table containing a \\n in each header cell.\n\n${toHTML(table)}`);
+		});
+
+		it("Table cells with markup within code", function() {
+			let table = getElement(dom, "tableWithCellFormatting");
+			let lis = htmlparser.DomUtils.find(function(node) {
+				return node.name === "li"
+			}, [table], true);
+			let ok = true;
+			lis.forEach(function(li) {
+				let child = (li.children || [{}])[0];
+				if (child.name !== "code") {
+					ok = false;
+				} else {
+					child = (child.children || [{}])[0];
+					if (!/&lt;.+&gt;/.test(child.data)) {
+						ok = false;
+					}
+				}
+			});
+			assert(ok, `At least one of the table cells containing a markup-like string within an in-line code did not generate properly.\n\n${toHTML(table)}`);
+		});
+
+		it("Table that's already HTML", function() {
+			let noNewline = getElement(dom, "no-newline");
+			assert(noNewline.children.length === 1, `A newline character in an HTML table appears to have caused the cell content to be split into multiple elements but should have been left alone.\n\n${toHTML(noNewline)}`);
+
+			let noList = getElement(dom, "no-list");
+			let lis = htmlparser.DomUtils.find(function(node) {
+				return node.name === "li"
+			}, [noList], true);
+			assert(lis.length === 0, `A list character in an HTML table appears to have caused the generation of a list but should have been left alone.\n\n${toHTML(noList)}`);
+
+			let noEm = getElement(dom, "no-em");
+			let ems = htmlparser.DomUtils.find(function(node) {
+				return node.name === "em"
+			}, [noEm], true);
+			assert(ems.length === 0, `A '*' character in an HTML table appears to have caused the generation of an <em> but should have been left alone.\n\n${toHTML(noEm)}`);
+
+			let noStrong = getElement(dom, "no-strong");
+			let strongs = htmlparser.DomUtils.find(function(node) {
+				return node.name === "strong"
+			}, [noStrong], true);
+			assert(strongs.length === 0, `A '**' sequence in an HTML table appears to have caused the generation of a <strong> but should have been left alone.\n\n${toHTML(noStrong)}`);
+
+			let em = getElement(dom, "em");
+			ems = htmlparser.DomUtils.find(function(node) {
+				return node.name === "em"
+			}, [em], true);
+			assert(ems.length === 1, `An <em> in an HTML table should have been preserved in the generated output but appears to have not been.\n\n${toHTML(em)}`);
+
+			let strong = getElement(dom, "strong");
+			strongs = htmlparser.DomUtils.find(function(node) {
+				return node.name === "strong"
+			}, [strong], true);
+			assert(strongs.length === 1, `A <strong> in an HTML table should have been preserved in the generated output but appears to have not been.\n\n${toHTML(strong)}`);
+		});
+
+		it("Table containing HTML tags", function() {
+			let table = getElement(dom, "tableWithTags");
+			let ths = htmlparser.DomUtils.find(function(node) {
+				return node.name === "th"
+			}, [table], true);
+
+			let noNewline = ths[0];
+			let brs = htmlparser.DomUtils.find(function(node) {
+				return node.name === "br"
+			}, [noNewline], true);
+			assert(brs.length === 0, `A newline character in a table cell should have been ignored because the cell contains an HTML tag, but apparently was not ignored.\n\n${toHTML(noNewline)}`);
+
+			let newline = ths[1];
+			brs = htmlparser.DomUtils.find(function(node) {
+				return node.name === "br"
+			}, [newline], true);
+			assert(brs.length === 1, `A newline character in a table cell should have generated as a <br> since its cell does not contain any HTML tag but apparently did not\n\n${toHTML(newline)}`);
+
+			let tds = htmlparser.DomUtils.find(function(node) {
+				return node.name === "td"
+			}, [table], true);
+
+			let noStrong = tds[0];
+			let strongs = htmlparser.DomUtils.find(function(node) {
+				return node.name === "strong"
+			}, [noStrong], true);
+			/* TODO The following is intentionally commented because it reveals a case that *possibly* should be handled better in the generator */
+			//assert(strongs.length === 0, `A '**' sequence in a table cell should have been ignored because the cell contains an HTML tag, but apparently was not ignored.\n\n${toHTML(noStrong)}`);
+
+			let strong = tds[1];
+			strongs = htmlparser.DomUtils.find(function(node) {
+				return node.name === "strong"
+			}, [strong], true);
+			assert(strongs.length === 1, `A '**' sequence in a table cell should have generated as a <strong> since its cell does not contain any HTML tag but apparently did not\n\n${toHTML(strong)}`);
+
+			let noList = tds[2];
+			let listItems = htmlparser.DomUtils.find(function(node) {
+				return node.name === "li"
+			}, [noList], true);
+			assert(listItems.length === 0, `Hyphens in a table cell should have been ignored because the cell contains an HTML tag, but apparently was not ignored.\n\n${toHTML(noList)}`);
+
+			let list = tds[3];
+			listItems = htmlparser.DomUtils.find(function(node) {
+				return node.name === "li"
+			}, [list], true);
+			assert(listItems.length === 2, `Hyphens in a table cell should have generated as a two-item list since its cell does not contain any HTML tag but apparently did not\n\n${toHTML(list)}`);
+		});
+
+		it("Table with empty last cell", function() {
+			let table = getElement(dom, "tableWithLastCellEmpty");
+			let body = htmlparser.DomUtils.find(function(node) {
+				return node.name === "tbody"
+			}, [table], true);
+			let trs = htmlparser.DomUtils.find(function(node) {
+				return node.name === "tr"
+			}, body, true);
+			assert(trs.length === 2, `The table with a blank last cell did not generate with the expected number of rows (2).\n\n${toHTML(table)}`);
+		});
+
+	});
+
     // describe('extensionsTest', function() {
 	// 	const OUTPUT_GENERATED_HTML = false;
     // 	it('extensionsTest', function() {

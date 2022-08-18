@@ -119,5 +119,55 @@ Term 2 with *inline markup*
     Third paragraph of definition 2.
 
 
+<!-- linkification -->
+
+This project lives at https://www.github.com
+{: #plaintextLink}
+
+This project lives at www.github.com
+{: #fuzzyLink}
+
+Contacting the White House. Please send your comments to comments@whitehouse.gov. Due to the large volume of e-mail received, the White House cannot respond to every message.
+{: #fuzzyEmail}
+
+<!-- tables -->
+
+| Header1\nok | Header2\nok | 
+|-----|-----|
+| Bold\nok | Elements:  \n - `<strong>`  \n - `<b>` *(deprecated)* |
+| **Code**\nok | Elements:  \n - `<code>`  \n - `<pre>` |
+{: #tableWithCellFormatting}
+
+<table>
+<thead>
+  <tr>
+    <th id="no-newline">*no\nnewline*</th>
+    <th id="no-list">**no \n - list**</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td id="no-em">*no em*</td>
+    <td id="no-strong">**no strong**</td>
+  </tr>
+  <tr>
+    <td id="em"><em>em</em></td>
+    <td id="strong"><strong>strong</strong></td>
+  </tr>
+</table>
+{: #tableHTML}
+
+| <em>Preamble</em>Header1\nok | Header2\nok | 
+|-----|-----|
+| **Bold** <em>Postamble</em> | **Bold** |
+| Elements:  \n - one  \n - two <strong>Postamble</strong> | Elements:  \n - one  \n - two |
+{: #tableWithTags}
+
+| Header  | Header  | Header  |  Header |
+|-------- |-------- |-------- |-------- |
+| Content | Content | Content | my |
+| Content | Content | Content | |
+{: #tableWithLastCellEmpty}
+
 Final Element that intentionally ends with an attribute and no terminating whitespace
-{: lastElement}
+{: #lastElement}
