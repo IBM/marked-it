@@ -58,7 +58,8 @@ describe('htmlGenerator2 tests', function() {
 		// version: version
 	};
 
-	const html = markedIt.generate(sourceV2, options).html.text;
+	const returnedValue = markedIt.generate(sourceV2, options);
+	const html = returnedValue.html.text;
 	const dom = htmlToDom(html);
 
     // before(function() {});
@@ -143,6 +144,21 @@ describe('htmlGenerator2 tests', function() {
 		it("Code block with attributes", function() {
 			let codeBlock = getElement(dom, "codeBlockWithAttributes");
 			assert(codeBlock.attribs.a === "b", `Code block #codeBlockWithAttributes should have attribute "a=b".\n\n${toHTML(codeBlock)}`);
+		});
+		it("Attributes support turned off", function() {
+			let customOptions = { ...options };
+			customOptions.variablesMap = {
+				"root-level": "Root-Level",
+				"root-level-path": "Root-Level-Path",
+				hierarchical: {label: {string: "Hierarchical"}}
+			};
+			customOptions.processAttributes = false;
+			let result = markedIt.generate(sourceV2, customOptions);
+			let html = result.html.text;
+			let dom = htmlToDom(html);
+
+			let header = getElement(dom, "alternateHeaderId");
+			assert(!header, `Header #alternateHeaderId should not have been findable with attributes support turned off, but it was found.\n\n${toHTML(header)}`);
 		});
 	});
 
@@ -419,6 +435,19 @@ describe('htmlGenerator2 tests', function() {
 			assert(trs.length === 2, `The table with a blank last cell did not generate with the expected number of rows (2).\n\n${toHTML(table)}`);
 		});
 
+		it("Table verify attributes placement", function() {
+			let elements = htmlparser.DomUtils.find(function(node) {
+				return (node.attribs || {}).class === "testTable"
+			}, dom, true);
+			let tablesCount = 0;
+			elements.forEach(function(current) {
+				if (current.name === "table") {
+					tablesCount++;
+				}
+			});
+			assert(tablesCount === 2, `There were ${tablesCount} tables with class .testTable instead of the expected 2, so table attributes are not being properly placed on the table element(s).`);
+		});
+
 		it("Table cell processing turned off", function() {
 			let customOptions = { ...options };
 			customOptions.processTableCellContent = false;
@@ -457,94 +486,149 @@ describe('htmlGenerator2 tests', function() {
 
 			let variablesString = getElement(dom, "variables");
 			let resolvedString = variablesString.children[0].data;
-			let expectedString = "This sentence has a Root-Level variable, a Root-Level-Path variable, a Hierarchical variable and a {{missing}} one.";
+			let expectedString = "This sentence has a Root-Level variable, a Root-Level-Path variable, a Hierarchical variable, a Front Matter variable and a {{missing}} one.";
+			assert(resolvedString === expectedString, `Variable substitution did not give the expected result.\nExpected: ${expectedString}\nActual  : ${resolvedString}`);
+		});
+
+		it("Front matter processing turned off", function() {
+			let customOptions = { ...options };
+			customOptions.variablesMap = {
+				"root-level": "Root-Level",
+				"root-level-path": "Root-Level-Path",
+				hierarchical: {label: {string: "Hierarchical"}}
+			};
+			customOptions.processFrontMatter = false;
+			let result = markedIt.generate(sourceV2, customOptions);
+			let html = result.html.text;
+			let dom = htmlToDom(html);
+
+			let variablesString = getElement(dom, "variables");
+			let resolvedString = variablesString.children[0].data;
+			let expectedString = "This sentence has a Root-Level variable, a Root-Level-Path variable, a Hierarchical variable, a {{front.matter}} variable and a {{missing}} one.";
 			assert(resolvedString === expectedString, `Variable substitution did not give the expected result.\nExpected: ${expectedString}\nActual  : ${resolvedString}`);
 		});
 	});
 
-    // describe('extensionsTest', function() {
-	// 	const OUTPUT_GENERATED_HTML = false;
-    // 	it('extensionsTest', function() {
-	//     	let fd = fs.openSync('test/extensionsTest-source.md', "r");
-	//     	let mdText = readFile(fd);
-	//     	fs.closeSync(fd);
+	describe('Table of Contents (JSON)', function() {
+		it("Validate Generation", function() {
+			let toc = JSON.parse(returnedValue.jsonToc.text);
+			assert(toc.toc.topics.length === 2, `There were ${toc.toc.topics.length} top-level topics generated but there should have been 2.\n\n${JSON.stringify(toc, null, 4)}`);
+			let topTopic2 = toc.toc.topics[1];
+			assert(topTopic2.topics.length === 6, `There were ${topTopic2.topics.length} topics generated under the second top-level topic but there should have been 6.\n\n${JSON.stringify(topTopic2.topics, null, 4)}`);
+		})
+		it("Validate Errors", function() {
+			assert(returnedValue.jsonToc.errors.length === 1, "There were ${returnedValue.jsonToc.errors.length} TOC generation errors reported but there should have been 1 (invalid H6)");
+		})
+		it("Footnote excluded from TOC text", function() {
+			let toc = JSON.parse(returnedValue.jsonToc.text);
+			let topTopic2 = toc.toc.topics[1];
+			let childTopics = topTopic2.topics;
+			let re = /footnote.+$/;
+			childTopics.forEach(function(current) {
+				if (re.test(current.label)) {
+					assert(false, `A header was found with trailing footnote characters: "${current.label}"`);
+				}
+			});
+		})
+	});
 
-	// 		function addChild(html, data) {
-	// 			let dom = data.htmlToDom(html)[0];
-	// 			let newChild = data.htmlToDom(`<child>Child for ${dom.name}</child>`);
-	// 			data.domUtils.appendChild(dom, newChild[0]);
-	// 			return data.domToHtml(dom);
-	// 		}
+	describe('Indentation normalization', function() {
+		// TODO
+	});
 
-	//     	let extensions = {
-	//     		html: {
-	// 				onHeading: addChild,
-	// 				onCode: addChild,
-	// 				onBlockquote: addChild,
-	// 				onHr: addChild,
-	// 				onList: addChild,
-	// 				onListItem: addChild,
-	// 				onParagraph: addChild,
-	// 				onTable: addChild,
-	// 				onTablerow: addChild,
-	// 				onTablecell: addChild,
-	// 				onStrong: addChild,
-	// 				onEmphasis: addChild,
-	// 				onCodespan: addChild,
-	// 				onDel: addChild,
-	// 				onLink: addChild,
-	// 				onImage: function(html, data) {
-	// 					/* img tags cannot have children so handle differently from the other element types */
-	// 					let dom = data.htmlToDom(html)[0];
-	// 					dom.attribs.title = `Title for ${dom.name}`;
-	// 					return data.domToHtml(dom);
-	// 				}
-	//     		}
-	//     	};
+    describe('Extensions', function() {
+		const OUTPUT_GENERATED_HTML = false;
+    	it('All HTML generation extensions', function() {
+	    	let fd = fs.openSync('test/extensionsTest-source.md', "r");
+	    	let mdText = readFile(fd);
+	    	fs.closeSync(fd);
 
-	// 		let options = getOptions();
-	// 		options.extensions = extensions;
-	//     	let result = markedIt.generate(mdText, options);
-	//     	if (OUTPUT_GENERATED_HTML) {
-	//     		console.log("-------------------------------\n" + result.html.text);
-	// 		}
-	// 		let dom = htmlToDom(result.html.text);
+			function addChild(html, data) {
+				let dom = data.htmlToDom(html)[0];
+				let newChild = data.htmlToDom(`<child>Child for ${dom.name}</child>`);
+				data.domUtils.appendChild(dom, newChild[0]);
+				return data.domToHtml(dom);
+			}
 
-	// 		let elementIds = [
-	// 			"h1-atx", "h2-atx", "h3-atx", "h4-atx", "h5-atx", "h6-atx", "h1-setext", "h2-setext",
-	// 			"strong1", "strong2", "emphasized1", "emphasized2",
-	// 			"codeblock", "codespan", "link1", "paragraph1",
-	// 			"blockquote", "ordered-list", "unordered-list", "image1",
-	// 			"table"
-	// 		];
-	// 		elementIds.forEach(function(id) {
-	// 			let element = htmlparser.DomUtils.getElementById(id, dom, true);
-	// 			assert(element, "Expected element found: #" + id);
-	// 			if (element.name === "img") {
-	// 				/* img tags cannot have children so handle differently from the other element types */
-	// 				assert(element.attribs.title.indexOf(element.name) !== -1, "Expected title text found for: #" + id);
-	// 			} else {
-	// 				let childChildren = htmlparser.DomUtils.find(function(child) {return child.name === "child"}, [element], true);
-	// 				assert(childChildren.length, "Expected extension-added child found for: #" + id);
-	// 				let found = false;
-	// 				childChildren.forEach(function(child) {
-	// 					if (child.children[0].data.indexOf(element.name) !== -1) {
-	// 						found = true;
-	// 					}
-	// 				});
-	// 				assert(found, "Expected child text found for: #" + id);
-	// 			}
-	// 		});
-    // 	});
-	// });
+	    	let extensions = {
+	    		html: {
+					onHeading: addChild,
+					onCode: addChild,
+					onBlockquote: addChild,
+					onHr: addChild,
+					onList: addChild,
+					onListItem: addChild,
+					onParagraph: addChild,
+					onTable: addChild,
+					onTablerow: addChild,
+					onTablecell: addChild,
+					onStrong: addChild,
+					onEmphasis: addChild,
+					onCodespan: addChild,
+					onDel: addChild,
+					onLink: addChild,
+					onImage: function(html, data) {
+						/* img tags cannot have children so handle differently from the other element types */
+						let dom = data.htmlToDom(html)[0];
+						dom.attribs.title = `Title for ${dom.name}`;
+						return data.domToHtml(dom);
+					}
+	    		}
+	    	};
+
+			let customOptions = { ...options };
+			customOptions.variablesMap = {
+				"root-level": "Root-Level",
+				"root-level-path": "Root-Level-Path",
+				hierarchical: {label: {string: "Hierarchical"}}
+			};
+			customOptions.extensions = extensions;
+
+	    	let result = markedIt.generate(mdText, customOptions);
+	    	if (OUTPUT_GENERATED_HTML) {
+	    		console.log("-------------------------------\n" + result.html.text);
+			}
+			let dom = htmlToDom(result.html.text);
+
+			let elementIds = [
+				"h1-atx", "h2-atx", "h3-atx", "h4-atx", "h5-atx", "h6-atx", "h1-setext", "h2-setext",
+				"strong1", "strong2", "emphasized1", "emphasized2",
+				"codeblock", "codespan", "link1", "paragraph1",
+				"blockquote", "ordered-list", "unordered-list", "image1",
+				"table"
+			];
+			elementIds.forEach(function(id) {
+				let element = htmlparser.DomUtils.getElementById(id, dom, true);
+				assert(element, "Expected element found: #" + id);
+				if (element.name === "img") {
+					/* img tags cannot have children so handle differently from the other element types */
+					assert(element.attribs.title.indexOf(element.name) !== -1, "Expected title text found for: #" + id);
+				} else {
+					let childChildren = htmlparser.DomUtils.find(function(child) {return child.name === "child"}, [element], true);
+					assert(childChildren.length, "Expected extension-added child found for: #" + id);
+					let found = false;
+					childChildren.forEach(function(child) {
+						if (child.children[0].data.indexOf(element.name) !== -1) {
+							found = true;
+						}
+					});
+					assert(found, "Expected child text found for: #" + id);
+				}
+			});
+    	});
+	});
 });
 
 function getElement(dom, id) {
 	return htmlparser.DomUtils.getElementById(id, dom, true);
 }
 
-function toHTML(dom) {
-	return dom ? htmlparser.DomUtils.getInnerHTML(dom, {}) : "";
+function toHTML(dom, includeOuter) {
+	if (includeOuter) {
+		return dom ? htmlparser.DomUtils.getOuterHTML(dom, {}) : "";
+	} else {
+		return dom ? htmlparser.DomUtils.getInnerHTML(dom, {}) : "";
+	}
 }
 
 function htmlToDom(string, options) {
