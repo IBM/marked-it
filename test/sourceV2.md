@@ -1,3 +1,9 @@
+---
+
+front:
+  matter: Front Matter
+
+---
 
 <!-- a code block with an unknown language -->
 ```zsdgfdzfghz
@@ -41,9 +47,6 @@ const OPTIONS_MARKDOWNIT = {
 
 <-- technically invalid but allowed -->
 # Another H1 Header
-
-<-- the deepest header level -->
-###### H6
 
 <-- one level beyond the deepest header level -->
 ####### H7
@@ -100,6 +103,8 @@ Here is a footnote reference[^9], and another[^longnote].
 Here is a footnote that's [^missing].
 {: #footnoteMissing}
 
+## Heading with a footnote[^longnote]
+
 <!-- used by the footnote test -->
 [^9]: Here is the footnote.
 
@@ -136,7 +141,7 @@ Contacting the White House. Please send your comments to comments@whitehouse.gov
 |-----|-----|
 | Bold\nok | Elements:  \n - `<strong>`  \n - `<b>` *(deprecated)* |
 | **Code**\nok | Elements:  \n - `<code>`  \n - `<pre>` |
-{: #tableWithCellFormatting}
+{: #tableWithCellFormatting .testTable}
 
 <table>
 <thead>
@@ -167,11 +172,14 @@ Contacting the White House. Please send your comments to comments@whitehouse.gov
 |-------- |-------- |-------- |-------- |
 | Content | Content | Content | my |
 | Content | Content | Content | |
-{: #tableWithLastCellEmpty}
+{: #tableWithLastCellEmpty .testTable}
 
 
-This sentence has a {{root-level}} variable, a {{root-level-path}} variable, a {{hierarchical.label.string}} variable and a {{missing}} one.
+This sentence has a {{root-level}} variable, a {{root-level-path}} variable, a {{hierarchical.label.string}} variable, a {{front.matter}} variable and a {{missing}} one.
 {: #variables}
+
+<-- the deepest header level -->
+###### H6
 
 Final Element that intentionally ends with an attribute and no terminating whitespace
 {: #lastElement}
