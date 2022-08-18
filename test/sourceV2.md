@@ -169,5 +169,9 @@ Contacting the White House. Please send your comments to comments@whitehouse.gov
 | Content | Content | Content | |
 {: #tableWithLastCellEmpty}
 
+
+This sentence has a {{root-level}} variable, a {{root-level-path}} variable, a {{hierarchical.label.string}} variable and a {{missing}} one.
+{: #variables}
+
 Final Element that intentionally ends with an attribute and no terminating whitespace
 {: #lastElement}

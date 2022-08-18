@@ -443,6 +443,25 @@ describe('htmlGenerator2 tests', function() {
 		});
 	});
 
+	describe('Variables', function() {
+		it("Variable substitutions", function() {
+			let customOptions = { ...options };
+			customOptions.variablesMap = {
+				"root-level": "Root-Level",
+				"root-level-path": "Root-Level-Path",
+				hierarchical: {label: {string: "Hierarchical"}}
+			};
+			let result = markedIt.generate(sourceV2, customOptions);
+			let html = result.html.text;
+			let dom = htmlToDom(html);
+
+			let variablesString = getElement(dom, "variables");
+			let resolvedString = variablesString.children[0].data;
+			let expectedString = "This sentence has a Root-Level variable, a Root-Level-Path variable, a Hierarchical variable and a {{missing}} one.";
+			assert(resolvedString === expectedString, `Variable substitution did not give the expected result.\nExpected: ${expectedString}\nActual  : ${resolvedString}`);
+		});
+	});
+
     // describe('extensionsTest', function() {
 	// 	const OUTPUT_GENERATED_HTML = false;
     // 	it('extensionsTest', function() {
