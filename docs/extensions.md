@@ -36,7 +36,7 @@ The following extensions are used in marked-it:
 | Figures | _Custom IBM Cloud extension to meet accessibility needs_ | _IBM only_ |
 | Glossary tooltips | _Custom IBM Cloud extension to provide glossary definitions as tooltips inline_ | _IBM only_ |
 | Header and footer | [headerFooterExt.js](https://github.com/IBM/marked-it-cli/blob/master/example/headerFooterExt.js) | Creates the [header and footer](headers) portions of the HTML output. |
-| Includes | [includes](https://github.com/IBM/marked-it-cli/blob/master/example/includesExt.js) | Authoring reuse of files or sections of topics accross doc sets with [Includes](includes) |
+| Includes | [includesExt.js](https://github.com/IBM/marked-it-cli/blob/master/example/includesExt.js) | Authoring reuse of whole files, segment files, or sections of topics across doc sets with [Includes](includes). |
 | Key references | Functional extension. The replacement of variables with their resolved values happens in [marked-it.js](https://github.com/IBM/marked-it/blob/467cc9d270a78a57855f66ca127b7e937a545a08/lib/marked-it.js#L170) | [Keyrefs](keyrefs) |
 | Sections | [generateSectionsExt.js](https://github.com/IBM/marked-it-cli/blob/master/example/generateSectionsExt.js) |  Wraps all headings and the content within in a `<section>` element in the HTML output. |
 | Syntax highlighting | Functional extension. Defined in marked-it-cli [mdProcessor.js](https://github.com/IBM/marked-it-cli/blob/e944afb49abf4cab3c9e70f0c13e0d3b43896e72/lib/mdProcessor.js#L75) | [Syntax highlighting](syntax-highlighting) |
