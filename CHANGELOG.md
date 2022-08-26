@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.1.1] 2022-08-26
+Fix support for installing with npm 6.x.
+
 ## [2.1.0] 2022-07-21
 Add support for additional keys that do not start with <site.> in variableMaps.
 
