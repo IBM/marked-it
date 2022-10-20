@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.2.0] 2022-10-20
+Add support for generating task lists, and add warnings to result object for unresolved variables.
+
 ## [2.1.1] 2022-08-26
 Fix support for installing with npm 6.x.
 
