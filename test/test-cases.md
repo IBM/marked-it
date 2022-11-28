@@ -1,8 +1,8 @@
 ---
 
 copyright:
-  years: 2021
-lastupdated: "2021-11-03"
+  years: 2021, 2022
+lastupdated: "2022-11-28"
 
 ---
 
@@ -681,6 +681,18 @@ This is a list that uses `*`.
 "This is a quote with quotation marks."
 
 <q>This is a quote using HTML q tags.</q>
+
+## Superscript
+
+This is a test to see if subscript works...
+
+19^th^
+
+## Subscript
+
+This is a test to see if superscript works...
+
+H~2~O
 
 ## Tables
 
