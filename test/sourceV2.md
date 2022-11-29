@@ -135,6 +135,14 @@ This project lives at www.github.com
 Contacting the White House. Please send your comments to comments@whitehouse.gov. Due to the large volume of e-mail received, the White House cannot respond to every message.
 {: #fuzzyEmail}
 
+<!-- subscript -->
+
+H~2~O
+
+<!-- superscript -->
+
+19^th^
+
 <!-- tables -->
 
 | Header1\nok | Header2\nok | 
