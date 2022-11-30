@@ -237,6 +237,50 @@ describe('htmlGenerator2 tests', function() {
 		});
 	});
 
+	describe('Subscript', function() {
+		it("Subscript support active", function() {
+			let Subscript = htmlparser.DomUtils.find(function(node) {
+				return node.name === "sub"
+			}, dom, true);
+			assert(Subscript.length === 1, `There should be one <sub> element but there are ${Subscript.length}.\n\n${html}`);
+		});
+
+		it("Subscript support turned off", function() {
+			let customOptions = { ...options };
+			customOptions.processSubscript = false;
+			let result = markedIt.generate(sourceV2, customOptions);
+			let html = result.html.text;
+			let dom = htmlToDom(html);
+
+			let Subscript = htmlparser.DomUtils.find(function(node) {
+				return node.name === "sub"
+			}, dom, true);
+			assert(Subscript.length === 0, `There should be no <sub> elements when Subscript support is turned off but there are ${Subscript.length}.\n\n${html}`);
+		});
+	});
+
+	describe('Superscript', function() {
+		it("Superscript support active", function() {
+			let Superscript = htmlparser.DomUtils.find(function(node) {
+				return node.name === "sup"
+			}, dom, true);
+			assert(Superscript.length === 1, `There should be one <sup> element but there are ${Superscript.length}.\n\n${html}`);
+		});
+
+		it("Superscript support turned off", function() {
+			let customOptions = { ...options };
+			customOptions.processSuperscript = false;
+			let result = markedIt.generate(sourceV2, customOptions);
+			let html = result.html.text;
+			let dom = htmlToDom(html);
+
+			let Superscript = htmlparser.DomUtils.find(function(node) {
+				return node.name === "sup"
+			}, dom, true);
+			assert(Superscript.length === 0, `There should be no <sup> elements when Superscript support is turned off but there are ${Superscript.length}.\n\n${html}`);
+		});
+	});
+
 	describe('Linkification', function() {
 		it("Plaintext Links", function() {
 			let link = getElement(dom, "plaintextLink");
