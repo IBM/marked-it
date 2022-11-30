@@ -682,6 +682,18 @@ This is a list that uses `*`.
 
 <q>This is a quote using HTML q tags.</q>
 
+## Superscript
+
+This is a test to see if subscript works...
+
+19^th^
+
+## Subscript
+
+This is a test to see if superscript works...
+
+H~2~O
+
 ## Tables
 
 ### Comparison table
