@@ -22,6 +22,7 @@
   - [Includes](includes.md)
   - [Definition lists](definition-lists.md)
   - [Footnotes](footnotes.md)
+  - [Subscripts and superscripts](sub-sup.md)
   - [Audio](audio.md)
   - [Video](video.md)
   - [Syntax highlighting](syntax-highlighting.md)
