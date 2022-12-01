@@ -1,8 +1,8 @@
 ---
 
 copyright:
-  years: 2021
-lastupdated: "2021-11-03"
+  years: 2021, 2022
+lastupdated: "2022-11-02"
 
 ---
 
@@ -12,6 +12,8 @@ lastupdated: "2021-11-03"
 {:term: .term}
 {:audio: .audio}
 {:video: .video}
+{:external: .external _target="blank"}
+{:tag: .tag}
 
 # Test cases for marked-it changes
 {: #test-for-marked-it-changes}
@@ -693,6 +695,10 @@ This is a test to see if subscript works...
 This is a test to see if superscript works...
 
 H~2~O
+
+## Span
+
+The following text applies an attribute to a phrase using `<span>` tags: [Span-level attribute]{: tag}
 
 ## Tables
 
