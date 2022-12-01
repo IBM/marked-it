@@ -7,6 +7,7 @@ The following markdown-it plug-ins are used in marked-it:
 | Feature | markdown-it plug-in | Usage |
 |---------|-------------------|-------------------------------------------------------|
 | Attributes | [markdown-it-attrs](https://github.com/IBM/markdown-it-attrs) | [Attributes](attributes) |
+| Span-level attributes | [markdown-it-bracketed-spans](https://www.npmjs.com/package/markdown-it-bracketed-spans) | [Attributes](attributes) |
 | Definition lists | [markdown-it-deflist](https://www.npmjs.com/package/markdown-it-deflist) | [Definition lists](definition-lists) |
 | Footnotes | [markdown-it-footnote](https://www.npmjs.com/package/markdown-it-footnote) |[Footnotes](footnotes) |
 | Topic IDs | [markdown-it-toc-and-anchor](https://www.npmjs.com/package/markdown-it-toc-and-anchor) | Auto-generation of header ID's when not otherwise specified. Or, you can define with [ID attributes](attributes). |

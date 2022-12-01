@@ -37,7 +37,7 @@ marked-it-cli supports both attributes and attribute definitions. Attribute defi
 
 `.Class` Sets a value associated with the class attribute. This value is optional. If I define a class of `.ph` in my attribute, and I set this attribute on a header, the HTML5 output will produce `<h1 Class="ph"></h1>`. This value must begin with a period (.).
 
-`Custom` Sets a custom attribute value. This value is optional. If I define a custom value of `data-programlang='java'` in my attribute, and I set this attribute on a aeader, the HTML5 output will produce `<h1 data-programlang='java'></h1>`.
+`Custom` Sets a custom attribute value. This value is optional. If I define a custom value of `data-programlang='java'` in my attribute, and I set this attribute on a header, the HTML5 output will produce `<h1 data-programlang='java'></h1>`.
 
 Attribute definitions are defined at the top of your Markdown file. Each attribute definition must be enclosed in curly brackets, and must contain a unique name enclosed in a set of colons, followed by the definition: `{:Name: .class}`
 
@@ -80,3 +80,31 @@ When the above Markdown is transformed into HTML5, the parser produces an ID wit
 ```
 > **Note:** Header anchor IDs are output by default. No additional parameters or flags need to be passed to the parser when the command is run.
 
+## Applying attributes
+
+To apply attributes to block-level elements such as a paragraph, heading, code block, or table, specify the attribute on a new line after the element. 
+
+For example, here a `{: .codeblock}` class is applied to a code block.
+
+````markdown
+```sh
+echo "Hello world!"
+```
+{: .codeblock}
+````
+
+For phrase-level elements, such as a link, image, or code phrase, specify the attribute immediately after it, without any intervening spaces or empty lines.
+
+In the following example, an `{: .external}` class attribute is applied to a link.
+
+```markdown
+This is an [external link](https://cloud.ibm.com){: .external}.
+```
+
+You can also apply an attribute to a portion of content within a phrase. To do so, surround the content with brackets (`[]`) and apply the attribute immediately after them.
+
+In the following example, the `{: .tag}` class attribute is applied only to the words "New in 2022".
+
+```markdown
+[New in 2022]{: .tag} Get started by registering an account at https://cloud.ibm.com.
+```
