@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.2.3] 2022-11-30
+Add support for subscript and superscript.
+
 ## [2.2.2] 2022-11-01
 Add support for spans using bracket syntax.
 

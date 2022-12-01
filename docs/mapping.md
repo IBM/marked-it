@@ -28,6 +28,8 @@ The following table provides mappings between Lightweight DITA, Markdown, and HT
 | **italics** | `<i>` | `*italic*` or `_italic_` | `<em>` | 
 | **bold** | `<b>` | `**bold**` | `<strong>` |	
 | **monospace** | No equivalent | `` `monospace` `` (surrounded by single backticks) | `<code>` | 	
+| **superscript** | `<sup>` | `H~2~O` | `<sup>` | 	
+| **subscript** | `<sub>` | `19^th^` | `<sub>` | 	
 | **navigation** |  `<map>`	|	`toc.yaml`, see [Table of contents](toc)  |	toc.json |
 | **topic reference** | `<topicref>` |	filename.md	|	`<a href>`	|
 | **metadata** | `<data>`	 |	YAML definition at top of Markdown file |	`<meta>` inside `<head>` |
