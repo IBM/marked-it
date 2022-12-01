@@ -262,7 +262,7 @@ describe('htmlGenerator2 tests', function() {
 	describe('Superscript', function() {
 		it("Superscript support active", function() {
 			let Superscript = htmlparser.DomUtils.find(function(node) {
-				return node.name === "sup"
+				return node.name === "sup" && node.attribs.class === undefined; /* the second condition excludes footnote superscripts */
 			}, dom, true);
 			assert(Superscript.length === 1, `There should be one <sup> element but there are ${Superscript.length}.\n\n${html}`);
 		});
@@ -275,7 +275,7 @@ describe('htmlGenerator2 tests', function() {
 			let dom = htmlToDom(html);
 
 			let Superscript = htmlparser.DomUtils.find(function(node) {
-				return node.name === "sup"
+				return node.name === "sup" && node.attribs.class === undefined; /* the second condition excludes footnote superscripts */
 			}, dom, true);
 			assert(Superscript.length === 0, `There should be no <sup> elements when Superscript support is turned off but there are ${Superscript.length}.\n\n${html}`);
 		});

@@ -37,6 +37,8 @@
 		"markdown-it-attrs": "git+https://github.com/IBM/markdown-it-attrs.git#v4.0.0-7",
 		"markdown-it-deflist": "2.1.0",
 		"markdown-it-footnote": "3.0.3",
+		"markdown-it-sub": "1.0.0",
+		"markdown-it-sup": "1.0.0",
 		"markdown-it-toc-and-anchor": "4.2.0",
 		"markdown-it-task-lists": "2.1.1",
 		"markdown-it-bracketed-spans": "1.0.1"
