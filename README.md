@@ -98,6 +98,9 @@ All extensions in this section receive a *data* object containing:
 `domUtils`
 > An object with functions for manipulating DOM objects.  The functions are defined in the various files [here](https://github.com/fb55/domutils/tree/master/lib).
 
+`replaceVariables(string, variableMaps)`
+> A function that can be used to replace all occurrences of `{{<variableName>}}` in a string with the corresponding variable values.  This function comes pre-seeded with all currently-scoped variable values. Optionally, additional maps containing more variable name->value pairs can be provided.
+
 #### HTML Generation extension points
 
 > *html.onHeading*  
@@ -107,6 +110,7 @@ All extensions in this section receive a *data* object containing:
 > *html.onList*  
 > *html.onListItem*  
 > *html.onParagraph*  
+> *html.onPre*  
 > *html.onTable*  
 > *html.onTablerow*  
 > *html.onTablecell*  

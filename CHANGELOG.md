@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.3.0] 2023-06-16
+Add `onPre` HTML generation extension point and `replaceVariable` function in all HTML generation extension invocations.
+
 ## [2.2.3] 2022-11-30
 Add support for subscript and superscript.
 
