@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.4.0] 2023-07-12
+Add `labelFormatted` in JSON TOC generation.
+
 ## [2.3.0] 2023-06-16
 Add `onPre` HTML generation extension point and `replaceVariable` function in all HTML generation extension invocations.
 
