@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.4.1] 2023-11-09
+Change `markdown-it-attrs` dependency reference to `@marked-it/markdown-it-attrs`.
+
 ## [2.4.0] 2023-07-12
 Add `labelFormatted` in JSON TOC generation.
 
