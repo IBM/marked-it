@@ -2,7 +2,7 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
-## [2.4.1] 2023-11-09
+## [2.4.1 and 2.4.2] 2023-11-09
 Change `markdown-it-attrs` dependency reference to `@marked-it/markdown-it-attrs`.
 
 ## [2.4.0] 2023-07-12
