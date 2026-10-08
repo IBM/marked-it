@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.4.4] 2026-10-08
+Fix regex escape in findNextCodeFence and update transitive dependencies.
+
 ## [2.4.3] 2026-10-06
 Update js-yaml and transitive dependencies.
 
