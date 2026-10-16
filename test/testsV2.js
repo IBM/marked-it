@@ -575,6 +575,48 @@ describe('htmlGenerator2 tests', function() {
 			});
 		})
 	});
+	/* Regression tests derived from comparing output generated before/after the markdown-it 12 -> 15 upgrade */
+	describe('Upgrade regressions', function() {
+		function generate(source) {
+			return htmlToDom(markedIt.generate(source, {markedOptions: OPTIONS_MARKDOWNIT}).html.text);
+		}
+
+		it("Attributes after a paragraph within a list item apply to the paragraph, not the list item", function() {
+			let dom = generate("1. Step one.\n\n   Some paragraph text.\n   {: note}\n\n2. Step two.\n");
+			let paragraphs = htmlparser.DomUtils.find(function(node) {return node.name === "p" && node.attribs.note !== undefined}, dom, true);
+			assert(paragraphs.length === 1, `Expected 1 <p note> but found ${paragraphs.length}.\n\n${toHTML(dom)}`);
+			let items = htmlparser.DomUtils.find(function(node) {return node.name === "li" && node.attribs.note !== undefined}, dom, true);
+			assert(items.length === 0, `Expected no <li note> but found ${items.length}.\n\n${toHTML(dom)}`);
+		});
+		it("Attributes after the last paragraph of a list apply to the list", function() {
+			let dom = generate("1. Step one.\n   {: note}\n2. Step two.\n");
+			let lists = htmlparser.DomUtils.find(function(node) {return node.name === "ol" && node.attribs.note !== undefined}, dom, true);
+			assert(lists.length === 1, `Expected 1 <ol note> but found ${lists.length}.\n\n${toHTML(dom)}`);
+		});
+		it("A quote within a single-quoted attribute value does not prevent the other attributes from being applied", function() {
+			let dom = generate("## Header {: #quotedHeader .aClass g='\"h\"' c=\"d\"}\n");
+			let header = getElement(dom, "quotedHeader");
+			assert(header, `Header #quotedHeader was not found.\n\n${toHTML(dom)}`);
+			assert((header.attribs.class || "").indexOf("aClass") !== -1, `Header #quotedHeader should have class 'aClass'.\n\n${toHTML(dom)}`);
+			assert(header.attribs.c === "d", `Header #quotedHeader should have attribute 'c=d'.\n\n${toHTML(dom)}`);
+		});
+		it("Generated header IDs keep non-ASCII letters, drop punctuation, and number duplicates from 2", function() {
+			let dom = generate("# Über café & more!\n\n# Hello World\n\n# Hello World\n\n# 日本語 Title\n\n# a_b-c.d\n");
+			["über-café-more", "hello-world", "hello-world-2", "日本語-title", "a_b-cd"].forEach(function(id) {
+				assert(getElement(dom, id), `Expected header with ID '${id}'.\n\n${toHTML(dom)}`);
+			});
+		});
+		it("Generated header IDs do not include a tabindex attribute", function() {
+			let dom = generate("# Some header\n");
+			assert(getElement(dom, "some-header").attribs.tabindex === undefined, `<h1> should not have a tabindex.\n\n${toHTML(dom)}`);
+		});
+		it("Header IDs containing a link use the link text", function() {
+			let dom = generate("### [link text](http://example.com)\n");
+			assert(getElement(dom, "link-text"), `Expected header with ID 'link-text'.\n\n${toHTML(dom)}`);
+		});
+	});
+
+
 
 	describe('Indentation normalization', function() {
 		// TODO

@@ -1,7 +1,7 @@
 {
 	"name": "marked-it-core",
 	"description": "A Marked-backed Markdown->HTML generator.  Supports extended attribute and front matter syntaxes, and provides hooks for modifying the generated HTML.",
-	"version": "2.4.4",
+	"version": "3.0.0",
 	"author": "Grant Gayed <grant_gayed@ca.ibm.com>",
 	"license": "MIT",
 	"homepage": "https://github.com/ibm/marked-it",
@@ -29,22 +29,23 @@
 		"tests": "mocha test/testsV2.js"
 	},
 	"dependencies": {
-		"marked": "0.3.9",
+		"@marked-it/markdown-it-attrs": "4.0.2",
 		"htmlparser2": "3.8.3",
 		"js-yaml": "3.15.2",
-		"pretty-data": "0.40.0",
-		"markdown-it": "12.3.2",
-		"@marked-it/markdown-it-attrs": "v4.0.0-8",
+		"markdown-it": "15.0.3",
+		"markdown-it-anchor": "10.0.0",
+		"markdown-it-bracketed-spans": "1.0.1",
 		"markdown-it-deflist": "2.1.0",
 		"markdown-it-footnote": "3.0.3",
 		"markdown-it-sub": "1.0.0",
 		"markdown-it-sup": "1.0.0",
-		"markdown-it-toc-and-anchor": "4.2.0",
 		"markdown-it-task-lists": "2.1.1",
-		"markdown-it-bracketed-spans": "1.0.1"
+		"marked": "0.3.9",
+		"pretty-data": "0.40.0",
+		"uslug": "1.0.4"
 	},
 	"devDependencies": {
 		"highlight.js": "11.1.0",
-		"mocha": "^10.0.0"
+		"mocha": "^12.0.3"
 	}
 }
