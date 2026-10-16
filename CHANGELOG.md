@@ -2,7 +2,7 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
-## [3.0.0] 2026-10-16
+## [2.5.0] 2026-10-16
 Update `markdown-it` from 12.3.2 to 15.0.3 and `@marked-it/markdown-it-attrs` from 4.0.0-8 to 4.0.2 to resolve `linkify-it` vulnerabilities (CVE-2026-48801, CVE-2026-59887). Update the `mocha` dev dependency from 10 to 12 to resolve a `serialize-javascript` vulnerability (GHSA-5c6j-r48x-rmvq); running the tests now requires Node `^20.19.0 || >=22.12.0`.
 
 Replace the unmaintained `markdown-it-toc-and-anchor` with `markdown-it-anchor`, configured so that generated header IDs are unchanged (`uslug` slugs, no `tabindex`, duplicate generated IDs numbered from `-2`). Add a rule that merges `text_special` tokens before attributes are processed, since markdown-it 14+ otherwise splits attribute values containing entities such as `&#34;`.
