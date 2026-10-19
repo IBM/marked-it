@@ -2,6 +2,15 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [2.5.0] 2026-10-16
+Update `markdown-it` from 12.3.2 to 15.0.3 and `@marked-it/markdown-it-attrs` from 4.0.0-8 to 4.0.2 to resolve `linkify-it` vulnerabilities (CVE-2026-48801, CVE-2026-59887). Update the `mocha` dev dependency from 10 to 12 to resolve a `serialize-javascript` vulnerability (GHSA-5c6j-r48x-rmvq); running the tests now requires Node `^20.19.0 || >=22.12.0`.
+
+Replace the unmaintained `markdown-it-toc-and-anchor` with `markdown-it-anchor`, configured so that generated header IDs are unchanged (`uslug` slugs, no `tabindex`, duplicate generated IDs numbered from `-2`). Add a rule that merges `text_special` tokens before attributes are processed, since markdown-it 14+ otherwise splits attribute values containing entities such as `&#34;`.
+
+Behavior changes:
+- Two headers that use the same explicit ID (for example `{: #my-id}` on both) now cause generation to fail with an error. Previously the duplicate IDs were emitted as-is. Fix the duplicate in the source.
+- A non-breaking space (U+00A0) at the start or end of a block is no longer trimmed, because markdown-it 15 only trims ordinary spaces and tabs. In a definition list, a definition that starts with a non-breaking space (`:   <nbsp>Text`) now renders with a visible leading space in the `<dd>`. A trailing non-breaking space at the end of a paragraph is also kept. Remove the stray non-breaking spaces from the source to restore the previous output.
+
 ## [2.4.4] 2026-10-08
 Fix regex escape in findNextCodeFence and update transitive dependencies.
 

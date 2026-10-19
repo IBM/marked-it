@@ -12,4 +12,4 @@ The following markdown-it plug-ins are used in marked-it:
 | Footnotes | [markdown-it-footnote](https://www.npmjs.com/package/markdown-it-footnote) |[Footnotes](footnotes) |
 | Subscript | [markdown-it-sub](https://www.npmjs.com/package/markdown-it-sub) |[Subscripts and superscripts](sub-sup) |
 | Superscript | [markdown-it-sup](https://www.npmjs.com/package/markdown-it-sup) |[Subscripts and superscripts](sub-sup) |
-| Topic IDs | [markdown-it-toc-and-anchor](https://www.npmjs.com/package/markdown-it-toc-and-anchor) | Auto-generation of header ID's when not otherwise specified. Or, you can define with [ID attributes](attributes). |
+| Topic IDs | [markdown-it-anchor](https://www.npmjs.com/package/markdown-it-anchor) | Auto-generation of header ID's when not otherwise specified. Or, you can define with [ID attributes](attributes). |
