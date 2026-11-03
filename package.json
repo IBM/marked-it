@@ -39,7 +39,6 @@
 		"markdown-it-sub": "1.0.0",
 		"markdown-it-sup": "1.0.0",
 		"markdown-it-task-lists": "2.1.1",
-		"marked-it-core": "github:IBM/marked-it#pull/53/head",
 		"pretty-data": "0.40.0",
 		"uslug": "1.0.4"
 	},
