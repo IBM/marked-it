@@ -616,7 +616,13 @@ describe('htmlGenerator2 tests', function() {
 		});
 	});
 
-
+	describe('V1 deprecation', function() {
+		it("Throws an error when version 1 is requested", function() {
+			assert.throws(function() {
+				markedIt.generate("# Header", { version: 1 });
+			}, /Generator version 1 \(marked\) is no longer supported as of marked-it-core 3\.0\.0/);
+		});
+	});
 
 	describe('Indentation normalization', function() {
 		// TODO
