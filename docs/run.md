@@ -1,6 +1,8 @@
 # How do I run marked-it-cli?
 
-`marked-it-cli` uses [markdown-it](https://github.com/markdown-it/markdown-it) as the core Markdown generator.
+`marked-it-cli` uses [markdown-it](https://github.com/markdown-it/markdown-it) as the core Markdown generator (previously known as Version 2).
+
+> **Note on Version 1:** Legacy Version 1 used [marked](https://github.com/markedjs/marked) as the Markdown generator. Support for Version 1 has been completely removed as of `marked-it` and `marked-it-cli` 3.0.0. Attempting to use Version 1 (via `VERSION=1` environment variable, `version: 1` in `toc.yaml`, or legacy `toc` files) will result in a critical error and terminate the build.
 
 ## `marked-it-cli` command
 
