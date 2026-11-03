@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [3.0.0] 2026-10-17
+Drop support for V1 (`marked`) generator and remove the `marked` dependency. Version 2 (`markdown-it`) is now the only supported Markdown generator. Passing `version: 1` in options now throws an Error.
+
 ## [2.5.0] 2026-10-16
 Update `markdown-it` from 12.3.2 to 15.0.3 and `@marked-it/markdown-it-attrs` from 4.0.0-8 to 4.0.2 to resolve `linkify-it` vulnerabilities (CVE-2026-48801, CVE-2026-59887). Update the `mocha` dev dependency from 10 to 12 to resolve a `serialize-javascript` vulnerability (GHSA-5c6j-r48x-rmvq); running the tests now requires Node `^20.19.0 || >=22.12.0`.
 

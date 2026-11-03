@@ -1,25 +1,6 @@
 # How do I run marked-it-cli?
 
-As of version 2.0.0, `marked-it-cli` uses [markdown-it](https://github.com/markdown-it/markdown-it) as the core dependency. Previous versions of `marked-it-cli` used [marked](https://github.com/markedjs/marked) as the core dependency, but after version 0.25.1 you have the option of using either dependency. 
-
-## Before you begin
-
-If you are using version 2.0.0 or later, you do not need to set the version environment variable. By default, the environment variable is set to `VERSION=2`.
-
-However, if you haven't upgraded to the latest and want to use a previous version of marked-it, you can control which core dependency you use by setting the `VERSION` environment variable before you run `marked-it-cli`. By default, the environment variable is set to `VERSION=1`for versions prior to version 2.0.0.
-
-- `VERSION=2` sets `markdown-it` 
-- `VERSION=1` sets `marked` 
-
-For example, if you're running `marked-it-cli` 0.29.13 but want to use the updated `markdown-it` and associated features, set the environment variable by running the following command:
-
-```bash
-export VERSION=2
-```
-
-Core dependency selection is available in `marked-it-cli` 0.25.1 and later. Previous versions of `marked-it-cli` only support `marked`. 
-
-> **Note:** Versions using marked as the core dependency are no longer maintained.
+`marked-it-cli` uses [markdown-it](https://github.com/markdown-it/markdown-it) as the core Markdown generator.
 
 ## `marked-it-cli` command
 
