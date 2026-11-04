@@ -29,7 +29,7 @@ console.log(result.html.text);
 ```js
 {
 	extensions: {},
-	markedOptions: {tables: true, gfm: true, headerPrefix: "", xhtml: true, langPrefix: "lang-"},
+	markedOptions: {html: true, linkify: true, langPrefix: "lang-", xhtmlOut: true},
 	processAttributes: true,
 	processFrontMatter: true,
 	variablesMap: {},
