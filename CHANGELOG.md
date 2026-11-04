@@ -2,7 +2,7 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
-## [3.0.0] 2026-10-17
+## [3.0.0] 2026-11-04
 Drop support for V1 (`marked`) generator and remove the `marked` dependency. Version 2 (`markdown-it`) is now the only supported Markdown generator. Passing `version: 1` in options now throws an Error.
 
 ## [2.5.0] 2026-10-16
