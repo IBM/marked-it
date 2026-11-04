@@ -1,6 +1,6 @@
 # marked-it
 
-A [marked](https://github.com/chjj/marked)-backed Markdown->HTML generator.  Supports extended attribute and front matter syntaxes, and provides hooks for modifying the generated HTML. Check out the full [documentation](https://ibm.github.io/marked-it/) for marked-it.
+A [markdown-it](https://github.com/markdown-it/markdown-it)-backed Markdown->HTML generator.  Supports extended attribute and front matter syntaxes, and provides hooks for modifying the generated HTML. Check out the full [documentation](https://ibm.github.io/marked-it/) for marked-it.
 
 ## Install
 
@@ -29,7 +29,7 @@ console.log(result.html.text);
 ```js
 {
 	extensions: {},
-	markedOptions: {tables: true, gfm: true, headerPrefix: "", xhtml: true, langPrefix: "lang-"},
+	markedOptions: {html: true, linkify: true, langPrefix: "lang-", xhtmlOut: true},
 	processAttributes: true,
 	processFrontMatter: true,
 	variablesMap: {},
