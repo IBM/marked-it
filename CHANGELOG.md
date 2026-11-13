@@ -2,6 +2,9 @@
 
 This project uses [semantic versioning](http://semver.org/).
 
+## [3.0.1] 2026-11-13
+Update `@marked-it/markdown-it-attrs` from 4.0.2 to 4.0.3 and update transitive dependencies (`glob`, `serialize-javascript`).
+
 ## [3.0.0] 2026-11-04
 Drop support for V1 (`marked`) generator and remove the `marked` dependency. Version 2 (`markdown-it`) is now the only supported Markdown generator. Passing `version: 1` in options now throws an Error.
 

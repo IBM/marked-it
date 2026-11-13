@@ -1,7 +1,7 @@
 {
 	"name": "marked-it-core",
 	"description": "A Markdown->HTML generator.  Supports extended attribute and front matter syntaxes, and provides hooks for modifying the generated HTML.",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"author": "Grant Gayed <grant_gayed@ca.ibm.com>",
 	"license": "MIT",
 	"homepage": "https://github.com/ibm/marked-it",
@@ -28,7 +28,7 @@
 		"tests": "mocha test/testsV2.js"
 	},
 	"dependencies": {
-		"@marked-it/markdown-it-attrs": "4.0.2",
+		"@marked-it/markdown-it-attrs": "4.0.3",
 		"htmlparser2": "3.8.3",
 		"js-yaml": "3.15.2",
 		"markdown-it": "15.0.3",
